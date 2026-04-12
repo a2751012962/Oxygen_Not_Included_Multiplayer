@@ -14,13 +14,7 @@ namespace ONI_MP.Patches.World
 			if (GameClient.IsHardSyncInProgress)
 				return false;
 
-			// Singleplayer
-			if (!MultiplayerSession.InSession)
-			{
-				return true;
-			}
-
-			return MultiplayerSession.IsHost; // Block clients from executing this (For some reason it causes crashes at hard syncs?)
+			return true;
 		}
 	}
 }

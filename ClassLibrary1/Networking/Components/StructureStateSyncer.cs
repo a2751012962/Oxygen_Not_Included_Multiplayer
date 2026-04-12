@@ -151,6 +151,9 @@ namespace ONI_MP.Networking.Components
 				{
 					DebugConsole.LogError($"[StructureStateSyncer] Failed to set battery joules: {ex}");
 				}
+
+				// Refresh the client-side meter after writing the backing field directly.
+				go.GetComponent<BatteryTracker>()?.UpdateData();
 			}
 
 			var operational = go.GetComponent<Operational>();
