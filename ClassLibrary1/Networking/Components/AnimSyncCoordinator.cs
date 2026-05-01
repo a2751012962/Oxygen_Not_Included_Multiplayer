@@ -185,9 +185,15 @@ namespace ONI_MP.Networking.Components
 					if (!syncer.TryBuildSnapshot(out var packet, out var activityKey))
 						continue;
 
-					// Reliable: resync responses are small and low-frequency; a dropped
-					// response otherwise cascades into another client retry loop.
-					PacketSender.SendToPlayer(kvp.Key, packet, PacketSendMode.Reliable);
+                    if (!_syncStates.ContainsKey(syncer))
+                    {
+                        DebugConsole.LogError($"Syncer not registered: {syncer}");
+                        continue;
+                    }
+
+                    // Reliable: resync responses are small and low-frequency; a dropped
+                    // response otherwise cascades into another client retry loop.
+                    PacketSender.SendToPlayer(kvp.Key, packet, PacketSendMode.Reliable);
 					UpdateObservedState(syncer, activityKey, now);
 					_syncStates[syncer].LastSentTime = now;
 				}
