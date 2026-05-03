@@ -3,6 +3,7 @@ using ONI_MP.Networking.Components;
 using System.Collections;
 using Shared.Profiling;
 using UnityEngine;
+using ONI_MP.DebugTools;
 
 namespace ONI_MP.Patches.World.SideScreen
 {
@@ -68,6 +69,12 @@ namespace ONI_MP.Patches.World.SideScreen
 		private static bool ShouldRoundValue(GameObject target)
 		{
 			using var _ = Profiler.Scope();
+
+			if (target == null)
+			{
+                DebugConsole.LogError("Target is null on SliderPatch->ShouldRoundValue defaulting to false");
+				return false;
+            }
 
 			// ManualGenerator, EnergyGenerator (Coal), WoodGasGenerator, SpaceHeater all need rounding
 			return target.GetComponent<ManualGenerator>() != null ||
