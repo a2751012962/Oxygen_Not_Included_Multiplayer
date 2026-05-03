@@ -86,6 +86,8 @@ namespace ONI_MP.Patches.World.SideScreen
 		{
 			using var _ = Profiler.Scope();
 
+			if (target == null) return;
+
 			var comp = target.GetComponent<ISliderControl>() as Component;
 			if (comp == null) comp = target.GetComponent<ISingleSliderControl>() as Component;
 			if (comp != null) SideScreenSyncHelper.SyncSliderChange(comp, value, index);
