@@ -14,6 +14,7 @@ namespace ONI_MP.Networking.Packets.Chores
 		public bool IsCurrent;
 		public int MoreAmount;
 		public string IconSpriteName;
+		public int ListIndex;
 
 		public void Serialize(BinaryWriter writer)
 		{
@@ -27,6 +28,7 @@ namespace ONI_MP.Networking.Packets.Chores
 			writer.Write(IsCurrent);
 			writer.Write(MoreAmount);
 			writer.Write(IconSpriteName ?? string.Empty);
+			writer.Write(ListIndex);
 		}
 
 		public static ErrandEntry Deserialize(BinaryReader reader)
@@ -42,7 +44,8 @@ namespace ONI_MP.Networking.Packets.Chores
 				PersonalPriority = reader.ReadInt32(),
 				IsCurrent = reader.ReadBoolean(),
 				MoreAmount = reader.ReadInt32(),
-				IconSpriteName = reader.ReadString()
+				IconSpriteName = reader.ReadString(),
+				ListIndex = reader.ReadInt32()
 			};
 		}
 	}

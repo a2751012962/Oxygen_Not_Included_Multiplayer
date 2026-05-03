@@ -21,6 +21,13 @@ namespace ONI_MP.Networking
 {
     public static class NetworkConfig
     {
+        public class PingRanges
+        {
+            // Anything less then degraded is considered good
+            public static readonly int DEGRADED = 120;
+            public static readonly int BAD = 150;
+        }
+
         public enum NetworkTransport
         {
             STEAMWORKS = 0,

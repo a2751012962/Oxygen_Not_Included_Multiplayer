@@ -75,18 +75,19 @@ namespace ONI_MP.Networking.Components
 				_selectedField.SetValue(selectable, wasSelected);
 			}
 
+			int listIndex = 0;
 			var packet = new ChoreErrandsPacket { DupeNetId = identity.NetId };
-			AppendCurrentChore(packet);
+			AppendCurrentChore(packet, ref listIndex);
 
 			var lastContext = default(Chore.Precondition.Context);
 			bool hasLastContext = false;
-			AppendEntriesMerged(packet, _scratchSnapshot.succeededContexts, ref lastContext, ref hasLastContext);
-			AppendEntriesMerged(packet, _scratchSnapshot.failedContexts, ref lastContext, ref hasLastContext);
+			AppendEntriesMerged(packet, _scratchSnapshot.succeededContexts, ref lastContext, ref hasLastContext, ref listIndex);
+			AppendEntriesMerged(packet, _scratchSnapshot.failedContexts, ref lastContext, ref hasLastContext, ref listIndex);
 
 			PacketSender.SendToAllClients(packet);
 		}
 
-		private void AppendCurrentChore(ChoreErrandsPacket packet)
+		private void AppendCurrentChore(ChoreErrandsPacket packet, ref int listIndex)
 		{
 			var currentDriver = consumer.choreDriver;
 			if (currentDriver == null) return;
@@ -95,11 +96,14 @@ namespace ONI_MP.Networking.Components
 			var targetGO = current.target.gameObject;
 			if (targetGO == null) return;
 
-			packet.Entries.Add(BuildEntry(current, targetGO, isCurrent: true));
+			var entry = BuildEntry(current, targetGO, isCurrent: true);
+            entry.ListIndex = listIndex++;
+
+            packet.Entries.Add(entry);
 		}
 
 		private void AppendEntriesMerged(ChoreErrandsPacket packet, List<Chore.Precondition.Context> contexts,
-			ref Chore.Precondition.Context lastContext, ref bool hasLastContext)
+			ref Chore.Precondition.Context lastContext, ref bool hasLastContext, ref int listIndex)
 		{
 			var currentDriver = consumer.choreDriver;
 			for (int i = contexts.Count - 1; i >= 0 && packet.Entries.Count < ChoreErrandsPacket.MaxEntries; i--)
@@ -120,7 +124,11 @@ namespace ONI_MP.Networking.Components
 					continue;
 				}
 
-				packet.Entries.Add(BuildEntry(ctx.chore, targetGO, isCurrent: false));
+				var entry = BuildEntry(ctx.chore, targetGO, isCurrent: false);
+                entry.ListIndex = listIndex++;
+
+                packet.Entries.Add(entry);
+
 				lastContext = ctx;
 				hasLastContext = true;
 			}
@@ -143,7 +151,8 @@ namespace ONI_MP.Networking.Components
 				Priority = chore.masterPriority.priority_value,
 				PersonalPriority = consumer.GetPersonalPriority(chore.choreType),
 				IsCurrent = isCurrent,
-				IconSpriteName = ResolveIconSprite(chore.choreType)
+				IconSpriteName = ResolveIconSprite(chore.choreType),
+				ListIndex = 0, // Default to 0
 			};
 		}
 

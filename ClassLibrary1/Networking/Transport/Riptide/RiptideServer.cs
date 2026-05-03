@@ -170,6 +170,7 @@ namespace ONI_MP.Networking.Transport.Lan
                 DebugConsole.LogWarning($"Disconnected client {clientId} was not found in ConnectedPlayers.");
             }
             ReadyManager.RefreshReadyState();
+            MultiplayerSession.RefreshAllPlayerCursors();
         }
 
         private void OnServerMessageReceived(object sender, MessageReceivedEventArgs e)
@@ -184,10 +185,10 @@ namespace ONI_MP.Networking.Transport.Lan
             if (rawData.Length >= 4)
                 packetType = BitConverter.ToInt32(rawData, 0);
 
-            DebugConsole.Log(
-                $"[Riptide] Server received packet from {clientId}, " +
-                $"PacketType={packetType}, Size={size} bytes"
-            );
+            //DebugConsole.Log(
+            //    $"[Riptide] Server received packet from {clientId}, " +
+            //    $"PacketType={packetType}, Size={size} bytes"
+            //);
 
             var scope = Profiler.Scope();
 

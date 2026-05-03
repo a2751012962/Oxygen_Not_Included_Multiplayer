@@ -400,10 +400,10 @@ namespace ONI_MP.Networking.Transport.Steam
             if (ping <= 0)
                 return NetworkState.BAD;
 
-            if (ping <= 60)
+            if (ping <= NetworkConfig.PingRanges.DEGRADED)
                 return NetworkState.GOOD;
 
-            if (ping <= 120)
+            if (ping <= NetworkConfig.PingRanges.BAD)
                 return NetworkState.DEGRADED;
 
             return NetworkState.BAD;

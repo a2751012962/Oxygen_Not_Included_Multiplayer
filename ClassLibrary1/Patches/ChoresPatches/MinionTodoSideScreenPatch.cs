@@ -119,7 +119,9 @@ namespace ONI_MP.Patches.Chores
 			int activeCount = 0;
 			if (entries != null)
 			{
-				for (int i = 0; i < entries.Count; i++)
+                entries.Sort((a, b) => a.ListIndex.CompareTo(b.ListIndex));
+
+                for (int i = 0; i < entries.Count; i++)
 				{
 					var entry = entries[i];
 					var container = FindEntriesContainer(priorityGroups, entry);
@@ -127,8 +129,9 @@ namespace ONI_MP.Patches.Chores
 
 					var uiEntry = GetOrCreateEntry(screen, choreEntries, activeCount);
 					uiEntry.transform.SetParent(container);
-					uiEntry.transform.SetAsLastSibling();
-					ApplyEntry(uiEntry, entry, target);
+                    //uiEntry.transform.SetAsLastSibling();
+                    uiEntry.transform.SetSiblingIndex(container.childCount);
+                    ApplyEntry(uiEntry, entry, target);
 					ApplyButtonColor(screen, uiEntry, entry);
 					uiEntry.gameObject.SetActive(true);
 					activeCount++;

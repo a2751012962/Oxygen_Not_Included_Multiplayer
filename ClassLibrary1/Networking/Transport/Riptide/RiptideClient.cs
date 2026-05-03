@@ -77,6 +77,8 @@ namespace ONI_MP.Networking.Transport.Lan
             using var _ = Profiler.Scope();
 
             RemoveClientFromList(e.Id);
+            //MultiplayerSession.RemovePlayerCursor(e.Id);
+            MultiplayerSession.RefreshAllPlayerCursors();
         }
 
         private void OnOtherClientConnected(object sender, ClientConnectedEventArgs e)
@@ -302,10 +304,10 @@ namespace ONI_MP.Networking.Transport.Lan
             if (ping <= 0)
                 return NetworkIndicatorsScreen.NetworkState.BAD;
 
-            if (ping <= 60)
+            if (ping <= NetworkConfig.PingRanges.DEGRADED)
                 return NetworkIndicatorsScreen.NetworkState.GOOD;
 
-            if (ping <= 120)
+            if (ping <= NetworkConfig.PingRanges.BAD)
                 return NetworkIndicatorsScreen.NetworkState.DEGRADED;
 
             return NetworkIndicatorsScreen.NetworkState.BAD;

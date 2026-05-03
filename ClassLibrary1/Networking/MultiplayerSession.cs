@@ -74,6 +74,7 @@ namespace ONI_MP.Networking
 
 		public static IEnumerable<MultiplayerPlayer> AllPlayers => ConnectedPlayers.Values;
 
+		// New player cursors are created automatically if one doesn't exist
 		public static void CreateNewPlayerCursor(ulong steamID)
 		{
 			using var _ = Profiler.Scope();
@@ -118,11 +119,11 @@ namespace ONI_MP.Networking
 			}
 		}
 
-		public static void RemovePlayerCursor(ulong steamID)
+		public static void RemovePlayerCursor(ulong playerId)
 		{
 			using var _ = Profiler.Scope();
 
-			if (!PlayerCursors.TryGetValue(steamID, out var cursor))
+			if (!PlayerCursors.TryGetValue(playerId, out var cursor))
 				return;
 
 			if (cursor != null && cursor.gameObject != null)
@@ -131,8 +132,8 @@ namespace ONI_MP.Networking
 				Object.Destroy(cursor.gameObject);
 			}
 
-			PlayerCursors.Remove(steamID);
-			DebugConsole.Log($"[MultiplayerSession] Removed player cursor for {steamID}");
+			PlayerCursors.Remove(playerId);
+			DebugConsole.Log($"[MultiplayerSession] Removed player cursor for {playerId}");
 		}
 
 		public static void RemoveAllPlayerCursors()
@@ -151,6 +152,16 @@ namespace ONI_MP.Networking
 
 			PlayerCursors.Clear();
 			DebugConsole.Log("[MultiplayerSession] Removed all player cursors.");
+		}
+
+		public static void RefreshAllPlayerCursors()
+		{
+			using var _ = Profiler.Scope();
+			if(Utils.IsInGame())
+			{
+				RemoveAllPlayerCursors();
+				CreateConnectedPlayerCursors();
+			}
 		}
 
 		public static bool TryGetCursorObject(ulong steamID, out PlayerCursor cursorGO)

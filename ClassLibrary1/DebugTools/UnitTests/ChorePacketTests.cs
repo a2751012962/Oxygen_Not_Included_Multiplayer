@@ -19,17 +19,17 @@ namespace ONI_MP.DebugTools.UnitTests
                     new()
                     {
                         ChoreTypeId = "Dig", TargetCell = 50290, TargetLabel = "Natural Tile", PriorityClass = 0,
-                        Priority = 5, PersonalPriority = 1, IsCurrent = true
+                        Priority = 5, PersonalPriority = 1, IsCurrent = true, ListIndex = 0
                     },
                     new()
                     {
                         ChoreTypeId = "Cook", TargetCell = 12345, TargetLabel = "Microbe Musher", PriorityClass = 0,
-                        Priority = 5, PersonalPriority = 1, IsCurrent = false
+                        Priority = 5, PersonalPriority = 1, IsCurrent = false, ListIndex = 1,
                     },
                     new()
                     {
                         ChoreTypeId = "Build", TargetCell = 67890, TargetLabel = "Ladder", PriorityClass = 0,
-                        Priority = 5, PersonalPriority = 1, IsCurrent = false
+                        Priority = 5, PersonalPriority = 1, IsCurrent = false, ListIndex = 2
                     }
                 ]
             };
@@ -48,6 +48,9 @@ namespace ONI_MP.DebugTools.UnitTests
             if (!output.Entries[0].IsCurrent) return UnitTestResult.Fail("First entry should be current");
             if (output.Entries[1].TargetLabel != "Microbe Musher") return UnitTestResult.Fail("Entry 1 target label mismatch");
             if (output.Entries[2].ChoreTypeId != "Build") return UnitTestResult.Fail("Entry 2 chore type mismatch");
+            if (output.Entries[0].ListIndex != 0) UnitTestResult.Fail("Entry 0 has incorrect list index");
+            if (output.Entries[1].ListIndex != 1) UnitTestResult.Fail("Entry 1 has incorrect list index");
+            if (output.Entries[2].ListIndex != 2) UnitTestResult.Fail("Entry 2 has incorrect list index");
 
             return UnitTestResult.Pass("Roundtripped current + upcoming");
         }
