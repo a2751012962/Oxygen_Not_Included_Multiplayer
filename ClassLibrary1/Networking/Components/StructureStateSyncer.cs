@@ -183,7 +183,6 @@ namespace ONI_MP.Networking.Components
             battery.joulesAvailable = packet.Value;
             RefreshBatteryTracker(go);
 			UpdateBatteryMeter(battery, packet.Value);
-            DebugConsole.Log("BATTERY SYNC BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
         }
 
         private static void UpdateBatteryMeter(Battery battery, float joules)
@@ -197,8 +196,6 @@ namespace ONI_MP.Networking.Components
 
                 float percent = Mathf.Clamp01(joules / battery.capacity);
                 meter.SetPositionPercent(percent);
-				DebugConsole.Log("BATTERY SYNC METER UPDATE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-
             } catch(Exception ex)
 			{
                 DebugConsole.LogError($"[StructureStateSyncer] Meter update failed: {ex}");
