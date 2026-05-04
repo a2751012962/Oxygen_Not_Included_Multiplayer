@@ -4,6 +4,7 @@ using ONI_MP.Networking;
 using ONI_MP.Networking.Packets.Tools.Build;
 using System.Linq;
 using Shared.Profiling;
+using ONI_MP.Misc;
 
 [HarmonyPatch(typeof(Constructable), "FinishConstruction")]
 public static class ConstructablePatch
@@ -45,7 +46,9 @@ public static class ConstructablePatch
 			DebugConsole.Log($"[ConstructablePatch] Captured connections for {def.PrefabID}: Up={connectsUp}, Down={connectsDown}, Left={connectsLeft}, Right={connectsRight}");
 		}
 
-		var packet = new BuildCompletePacket
+        BuildingUtils.GetLayerInfo(building, out var objectLayer, out var isReplacement);
+
+        var packet = new BuildCompletePacket
 		{
 			Cell = cell,
 			PrefabID = def.PrefabID,
@@ -57,7 +60,8 @@ public static class ConstructablePatch
 			ConnectsDown = connectsDown,
 			ConnectsLeft = connectsLeft,
 			ConnectsRight = connectsRight,
-			ObjectLayer = def.ObjectLayer
+			ObjectLayer = objectLayer,
+			IsReplacement = isReplacement
 		};
 
 		PacketSender.SendToAllClients(packet);

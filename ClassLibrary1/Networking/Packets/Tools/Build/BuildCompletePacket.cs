@@ -18,7 +18,6 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 		public List<string> MaterialTags = new List<string>();
 		public float Temperature;
 		public string FacadeID = "DEFAULT_FACADE";
-		public ObjectLayer ObjectLayer;
 
 		// Connection direction flags for wires/pipes (like UtilityBuildPacket)
 		public bool ConnectsUp;
@@ -26,7 +25,10 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 		public bool ConnectsLeft;
 		public bool ConnectsRight;
 
-		public void Serialize(BinaryWriter writer)
+        public ObjectLayer ObjectLayer;
+        public bool IsReplacement;
+
+        public void Serialize(BinaryWriter writer)
 		{
 			using var _ = Profiler.Scope();
 
@@ -47,6 +49,7 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 			writer.Write(ConnectsRight);
 
 			writer.Write((int)ObjectLayer);
+			writer.Write(IsReplacement);
 		}
 
 		public void Deserialize(BinaryReader reader)
@@ -78,6 +81,7 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 			ConnectsRight = reader.ReadBoolean();
 
 			ObjectLayer = (ObjectLayer) reader.ReadInt32();
+			IsReplacement = reader.ReadBoolean();
 		}
 
 		public void OnDispatched()
@@ -105,10 +109,17 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 				tags.Add(SimHashes.SandStone.CreateTag());
 			}
 
+			int layerIndex = (int)ObjectLayer;
+
 			// Destroy ghost/constructable if it still exists
-			GameObject obj = Grid.Objects[Cell, (int)def.ObjectLayer];
-			if (obj != null && obj.GetComponent<Constructable>() != null)
-				Util.KDestroyGameObject(obj);
+			GameObject existing = Grid.Objects[Cell, layerIndex];
+			if(existing != null)
+			{
+				if(existing.GetComponent<Constructable>() != null || IsReplacement)
+				{
+					Util.KDestroyGameObject(existing);
+				}
+			}
 
 			var builtObj = def.Build(
 					Cell,
