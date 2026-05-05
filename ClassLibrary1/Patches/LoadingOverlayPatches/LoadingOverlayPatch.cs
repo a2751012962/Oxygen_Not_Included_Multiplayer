@@ -34,15 +34,5 @@ public class LoadingOverlayPatch
 
         var rect = image.rectTransform;
         rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 200);
-        LogChildren(instance.transform);
-    }
-
-    public static void LogChildren(Transform parent, string indent = "")
-    {
-        foreach (Transform child in parent)
-        {
-            DebugConsole.Log($"[Loading Screen] {indent}- {child.name}");
-            LogChildren(child, indent + "  ");
-        }
     }
 }
