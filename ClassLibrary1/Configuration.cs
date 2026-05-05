@@ -19,74 +19,63 @@ namespace ONI_MP
         [JsonProperty]
         public ClientSettings Client { get; set; } = new ClientSettings();
 
-        [Option("──────── HOST SETTINGS ────────", "")] public bool HostHeader => false;
-
-        [Option("Max Lobby Size")]
-        public int MaxLobbySize
-        {
-            get => Host.MaxLobbySize;
-            set => Host.MaxLobbySize = value;
-        }
-
-        [Option("Host Max Messages Per Poll")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.HOST_SETTINGS.MAX_MESSAGES_PER_POLL", "STRINGS.UI.CONFIGURATION.TOOLTIPS.HOST_SETTINGS.MAX_MESSAGES_PER_POLL", "STRINGS.UI.CONFIGURATION.HEADERS.HOST_SETTINGS")]
         public int HostMaxMessagesPerPoll
         {
             get => Host.MaxMessagesPerPoll;
-            set => Host.MaxMessagesPerPoll = value;
+            set => Host.MaxMessagesPerPoll = Mathf.Clamp(value, 1, 1024);
         }
 
-        [Option("Save Chunk Size (KB)")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.HOST_SETTINGS.SAVE_FILE_TRANSFER_CHUNK", "STRINGS.UI.CONFIGURATION.TOOLTIPS.HOST_SETTINGS.SAVE_FILE_TRANSFER_CHUNK", "STRINGS.UI.CONFIGURATION.HEADERS.HOST_SETTINGS")]
         public int SaveFileTransferChunkKB
         {
             get => Host.SaveFileTransferChunkKB;
-            set => Host.SaveFileTransferChunkKB = value;
+            set => Host.SaveFileTransferChunkKB = Mathf.Clamp(value, 1, 1024);
         }
 
-        [Option("──────── CLIENT SETTINGS ───────", "")] public bool ClientHeader => false;
-
-        [Option("Client Max Messages Per Poll")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.CLIENT_SETTINGS.MAX_MESSAGES_PER_POLL", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CLIENT_SETTINGS.MAX_MESSAGES_PER_POLL", "STRINGS.UI.CONFIGURATION.HEADERS.CLIENT_SETTINGS")]
         public int ClientMaxMessagesPerPoll
         {
             get => Client.MaxMessagesPerPoll;
-            set => Client.MaxMessagesPerPoll = value;
+            set => Client.MaxMessagesPerPoll = Mathf.Clamp(value, 1, 1024);
         }
 
-        [Option("Use Random Player Color")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.CURSOR_SETTINGS.RANDOM_COLOR", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CURSOR_SETTINGS.RANDOM_COLOR", "STRINGS.UI.CONFIGURATION.HEADERS.CURSOR_SETTINGS")]
         public bool UseRandomPlayerColor
         {
             get => Client.UseRandomPlayerColor;
             set => Client.UseRandomPlayerColor = value;
         }
 
-        [Option("My Cursor Color: Red")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.CURSOR_SETTINGS.RED", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CURSOR_SETTINGS.RED", "STRINGS.UI.CONFIGURATION.HEADERS.CURSOR_SETTINGS")]
         public int CursorRed
         {
             get => (int) Client.PlayerColor.R;
             set => Client.PlayerColor.R = (byte)Mathf.Clamp(value, 0, 255);
         }
 
-        [Option("My Cursor Color: Green")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.CURSOR_SETTINGS.GREEN", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CURSOR_SETTINGS.GREEN", "STRINGS.UI.CONFIGURATION.HEADERS.CURSOR_SETTINGS")]
         public int CursorGreen
         {
             get => (int) Client.PlayerColor.G;
             set => Client.PlayerColor.G = (byte)Mathf.Clamp(value, 0, 255);
         }
 
-        [Option("My Cursor Color: Blue")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.CURSOR_SETTINGS.BLUE", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CURSOR_SETTINGS.BLUE", "STRINGS.UI.CONFIGURATION.HEADERS.CURSOR_SETTINGS")]
         public int CursorBlue
         {
             get => (int) Client.PlayerColor.B;
             set => Client.PlayerColor.B = (byte)Mathf.Clamp(value, 0, 255);
         }
 
-        [Option("Use Puft Loading Icon")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.MISC_SETTINGS.PUFT_LOADINGSCREEN", "STRINGS.UI.CONFIGURATION.TOOLTIPS.MISC_SETTINGS.PUFT_LOADINGSCREEN", "STRINGS.UI.CONFIGURATION.HEADERS.MISC_SETTINGS")]
         public bool PuftAsLoadingIcon
         {
             get => Client.PuftAsLoadingIcon;
             set => Client.PuftAsLoadingIcon = value;
         }
 
-        [Option("Use Custom Loading Screen Color")]
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.MISC_SETTINGS.LOADINGSCREEN_COLOR", "STRINGS.UI.CONFIGURATION.TOOLTIPS.MISC_SETTINGS.LOADINGSCREEN_COLOR", "STRINGS.UI.CONFIGURATION.HEADERS.MISC_SETTINGS")]
         public bool UseCustomLoadingScreenColor
         {
             get => Client.UseCustomLoadingScreenColor;

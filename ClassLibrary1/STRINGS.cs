@@ -7,6 +7,75 @@ namespace ONI_MP
 	{
 		public class UI
 		{
+			public class CONFIGURATION
+			{
+				public class HEADERS
+				{
+					public static LocString HOST_SETTINGS = "Host Settings";
+					public static LocString CLIENT_SETTINGS = "Client Settings";
+					public static LocString CURSOR_SETTINGS = "Cursor Settings";
+					public static LocString MISC_SETTINGS = "Misc Settings";
+				}
+
+                public class TITLES
+                {
+                    public class HOST_SETTINGS
+                    {
+                        public static LocString MAX_MESSAGES_PER_POLL = "Max Messages Per Poll";
+						public static LocString SAVE_FILE_TRANSFER_CHUNK = "Save Chunk Size (KB)";
+                    }
+
+                    public class CLIENT_SETTINGS
+                    {
+                        public static LocString MAX_MESSAGES_PER_POLL = "Max Messages Per Poll";
+                    }
+
+                    public class CURSOR_SETTINGS
+                    {
+						public static LocString RANDOM_COLOR = "Use Random Color";
+						public static LocString RED = "Red";
+						public static LocString GREEN = "Green";
+						public static LocString BLUE = "Blue";
+                    }
+
+                    public class MISC_SETTINGS
+                    {
+                        public static LocString PUFT_LOADINGSCREEN = "Use Puft Loading Icon";
+                        public static LocString LOADINGSCREEN_COLOR = "Use Custom Loading Screen Color";
+                    }
+                }
+
+                public class TOOLTIPS
+                {
+                    public class HOST_SETTINGS
+                    {
+                        public static LocString MAX_MESSAGES_PER_POLL = "STEAMWORKS ONLY:\nMaximum number of incoming Steam networking messages processed per poll tick on the server.\nHigher values reduce latency spikes under heavy traffic but may increase CPU usage per frame.\nLower values improve frame stability but can increase message backlog and delay processing during bursts.\n\nRecommended range: 32–128 (default: 128)";
+						public static LocString SAVE_FILE_TRANSFER_CHUNK = "Size (in kilobytes) of each data chunk used when transferring save files over the network.\nSmaller values reduce bandwidth spikes and improve reliability on unstable connections but increase transfer time due to more packets.\nLarger values speed up transfers but may cause higher bandwidth bursts or fragmentation.\n\nRecommended range: 16–256 KB (default: 256 KB).";
+                    }
+
+                    public class CLIENT_SETTINGS
+                    {
+						public static LocString MAX_MESSAGES_PER_POLL = "STEAMWORKS ONLY:\nMaximum number of incoming Steam networking messages processed per poll tick on the client.\nHigher values reduce input and state update latency under heavy network load but may increase per-frame CPU usage.\nLower values improve frame stability but can cause message backlog and delayed processing during traffic spikes.\n\nRecommended range: 8–64 (default: 16)";
+                    }
+
+                    public class CURSOR_SETTINGS
+                    {
+						public static LocString RANDOM_COLOR = "Select a random color for your cursor during online sessions.";
+						public static LocString RED = "The Red RGB Value of your cursor during online sessions (0-255)";
+						public static LocString GREEN = "The Green RGB Value of your cursor during online sessions (0-255)";
+						public static LocString BLUE = "The Blue RGB Value of your cursor during online sessions (0-255)";
+                    }
+
+                    public class MISC_SETTINGS
+                    {
+						public static LocString PUFT_LOADINGSCREEN = "Override the loading icon with a Puft.";
+						public static LocString LOADINGSCREEN_COLOR = "Override the purple background of the loading screen with turquoise.";
+                    }
+                }
+            }
+
+            
+
             public class PROTOCOL
             {
                 public static LocString NO_METADATA = "Peer is running a build without protocol metadata.";
