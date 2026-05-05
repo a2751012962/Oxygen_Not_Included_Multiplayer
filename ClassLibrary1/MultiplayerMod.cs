@@ -15,6 +15,9 @@ using System.Reflection;
 using Shared.Profiling;
 using UnityEngine;
 using static DistributionPlatform;
+using Epic.OnlineServices;
+using PeterHan.PLib.Core;
+using PeterHan.PLib.Options;
 
 namespace ONI_MP
 {
@@ -36,7 +39,9 @@ namespace ONI_MP
 			using var _ = Profiler.Scope();
 
 			Harmony = harmony;
-			base.OnLoad(harmony);
+            PUtil.InitLibrary(false);
+            new POptions().RegisterOptions(this, typeof(Configuration));
+            base.OnLoad(harmony);
 
             ModAssets.LoadAssetBundles();
 

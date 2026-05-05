@@ -10,29 +10,34 @@ public class LoadingOverlayPatch
 {
     public static void Postfix()
     {
-        bool enabled = Configuration.GetClientProperty<bool>("PuftAsLoadingIcon");
-        if (!enabled)
-            return; // Puft loading icon is disabled
-
         // Replace loading dupe face with custom icon
         var instance = LoadingOverlay.instance;
-        var colorfill = instance.transform.Find("ColorFill").GetComponent<Image>();
-        if (colorfill != null)
+
+        bool useCustomColor = Configuration.GetClientProperty<bool>("UseCustomLoadingScreenColor");
+        if (useCustomColor)
         {
-            var replacementColor = new Color(0f, 0.9f, 0.7f, colorfill.color.a);
-            colorfill.color = replacementColor;
+            var colorfill = instance.transform.Find("ColorFill").GetComponent<Image>();
+            if (colorfill != null)
+            {
+                var replacementColor = new Color(0f, 0.9f, 0.7f, colorfill.color.a);
+                colorfill.color = replacementColor;
+            }
         }
 
-        var image = instance.transform.Find("Image").GetComponent<Image>();
-        var replacementImage = ResourceLoader.LoadEmbeddedSprite("ONI_MP.Assets.mod_mascot.png", out var texture);
-        if (replacementImage == null)
-            return;
+        bool usePuft = Configuration.GetClientProperty<bool>("PuftAsLoadingIcon");
+        if (usePuft)
+        {
+            var image = instance.transform.Find("Image").GetComponent<Image>();
+            var replacementImage = ResourceLoader.LoadEmbeddedSprite("ONI_MP.Assets.mod_mascot.png", out var texture);
+            if (replacementImage == null)
+                return;
 
-        image.preserveAspect = true;
-        image.sprite = replacementImage;
-        image.color = Color.white;
+            image.preserveAspect = true;
+            image.sprite = replacementImage;
+            image.color = Color.white;
 
-        var rect = image.rectTransform;
-        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 200);
+            var rect = image.rectTransform;
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 200);
+        }
     }
 }
