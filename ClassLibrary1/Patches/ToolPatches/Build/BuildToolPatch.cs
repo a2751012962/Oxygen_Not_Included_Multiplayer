@@ -62,7 +62,8 @@ namespace ONI_MP.Patches.ToolPatches.Build
                     def.PrefabID,
                     cell,
                     orientation,
-                    selectedElements
+                    selectedElements,
+                    def.ObjectLayer
                 );
 
                 PacketSender.SendToAllOtherPeers(packet);
