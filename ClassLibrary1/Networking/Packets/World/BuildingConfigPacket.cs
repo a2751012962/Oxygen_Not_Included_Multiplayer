@@ -83,7 +83,8 @@ namespace ONI_MP.Networking.Packets.World
 							identity.NetId = NetId; // Client forces the NetId from Host
 							identity.RegisterIdentity();
 						}
-						DebugConsole.Log($"[BuildingConfigPacket] Resolved missing identity for {buildingGO.name} at cell {Cell}. Assigned NetId: {NetId}");
+
+                        DebugConsole.Log($"[BuildingConfigPacket] Resolved missing identity for {buildingGO.name} at cell {Cell}. Assigned NetId: {NetId}");
 					}
 				}
 			}
@@ -162,8 +163,10 @@ namespace ONI_MP.Networking.Packets.World
 
 			if (go == null) return;
 
-			// All handlers are now in the registry
-			if (BuildingConfigHandlerRegistry.TryHandle(go, this))
+            RefreshSideScreenIfOpen(go);
+
+            // All handlers are now in the registry
+            if (BuildingConfigHandlerRegistry.TryHandle(go, this))
 			{
 				DebugConsole.Log($"[BuildingConfigPacket] Handled by registry for {go.name}");
 				return;
