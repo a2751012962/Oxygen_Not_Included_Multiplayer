@@ -118,7 +118,10 @@ namespace ONI_MP.Networking
 
 			identities.Clear();
 			_lookupFailCount = 0;
+			// TODO Rope into 1
 			GroundItemPickedUpPacket.ClearPending();
+			StoreItemPacket.ClearPending();
+
 			PlayAnimPacket.ClearState();
 		}
 

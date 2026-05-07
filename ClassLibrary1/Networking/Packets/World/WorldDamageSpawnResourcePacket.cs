@@ -4,6 +4,7 @@ using ONI_MP.Networking.Packets.Architecture;
 using System.IO;
 using Shared.Profiling;
 using UnityEngine;
+using TemplateClasses;
 
 namespace ONI_MP.Networking.Packets.World
 {
@@ -81,7 +82,8 @@ namespace ONI_MP.Networking.Packets.World
 			identity.OverrideNetId(NetId);
 			DebugConsole.Log("[WorldDamageSpawnResourcePacket] Synchronized Network ID");
 
-			if (GroundItemPickedUpPacket.TryConsumePending(NetId))
+			// First check GroundItemPickedUp, then PickupItem then StoreItem, TODO: Rope into 1 list
+			if (GroundItemPickedUpPacket.TryConsumePending(NetId) || StoreItemPacket.TryConsumePending(NetId))
 			{
 				DebugConsole.Log($"[WorldDamageSpawnResourcePacket] Consumed pending ground-item pickup for NetId {NetId}");
 				Util.KDestroyGameObject(dropped);

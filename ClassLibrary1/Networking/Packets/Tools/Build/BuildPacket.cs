@@ -117,15 +117,21 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 
                 gameObject = def.TryReplaceTile(existingObject, pos, Orientation, tags, "DEFAULT_FACADE"); // Try replace
             }
-                SetPriority(gameObject);
+            SetPriority(gameObject);
         }
 
         private bool CanReplace(BuildingDef newDef, out GameObject existingObject)
         {
             existingObject = null;
 
-            // Only check the primary building layer (no iteration version)
-            var obj = Grid.Objects[Cell, (int)ObjectLayer];
+            if (newDef.ReplacementLayer == ObjectLayer.NumLayers)
+                return false;
+
+            Vector3 pos = Grid.CellToPosCBC(Cell, Grid.SceneLayer.Building);
+            if (!newDef.IsValidReplaceLocation(pos, Orientation, newDef.ReplacementLayer, ObjectLayer))
+                return false;
+
+            var obj = Grid.Objects[Cell, (int)newDef.ReplacementLayer];
             if (obj == null)
                 return false;
 
@@ -139,7 +145,7 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 
             existingObject = obj;
 
-            // same building
+            // same building (different material)
             if (existingDef == newDef)
                 return true;
 
