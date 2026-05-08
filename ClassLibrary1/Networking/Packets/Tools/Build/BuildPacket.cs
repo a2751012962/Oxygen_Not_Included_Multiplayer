@@ -112,7 +112,7 @@ namespace ONI_MP.Networking.Packets.Tools.Build
                     if (component != null && component.Def.Replaceable && def.CanReplace(replacementCanidate))
                     {
                         Tag tag = replacementCanidate.GetComponent<PrimaryElement>().Element.tag;
-                        if (tag.GetHash() == 1542131326)
+                        if (tag.GetHash() == (int)SimHashes.StableSnow)
                             tag = SimHashes.Snow.CreateTag();
                         if (component.Def != def || selected_elements[0] != tag)
                         {
