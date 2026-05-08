@@ -197,10 +197,17 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 
 				foreach (BaseUtilityBuildTool.PathNode node in path)
 				{
-					GameObject    gameObject    = Grid.Objects[node.cell, (int)def.TileLayer];
-					Prioritizable prioritizable = gameObject?.GetComponent<Prioritizable>();
-					prioritizable?.SetMasterPriority(Priority);
-				}
+                    GameObject gameObject = Grid.Objects[node.cell, (int)def.TileLayer];
+                    if (gameObject == null)
+                        continue;
+                    if (gameObject.TryGetComponent<Prioritizable>(out var prioritizable))
+                        prioritizable?.SetMasterPriority(Priority);
+                    if (gameObject.TryGetComponent<KAnimGraphTileVisualizer>(out var vis))
+                    {
+                        vis.UpdateConnections(vis.Connections);
+                        vis.Refresh();
+                    }
+                }
 			}
 			finally
 			{
