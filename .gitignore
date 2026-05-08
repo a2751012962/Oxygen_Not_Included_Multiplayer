@@ -421,3 +421,4 @@ build_install.sh
 /PublicisedAssembly
 CLAUDE.md
 .claude/
+/ClassLibrary1/Networking/Packets/Tools/Build/BuildCompletePacket.cs

@@ -23,8 +23,7 @@ public static class ConstructablePatch
 		int cell = Grid.PosToCell(__instance.transform.position);
 		var def = building.Def;
 
-		var materialTags = __instance.SelectedElementsTags?.Select(tag => tag.ToString()).ToList()
-											 ?? new System.Collections.Generic.List<string>();
+		var materialTags = __instance.SelectedElementsTags?.Select(tag => tag.ToString()).ToList() ?? new System.Collections.Generic.List<string>();
 
 		float temp = __instance.GetComponent<PrimaryElement>()?.Temperature ?? def.Temperature;
 
@@ -33,20 +32,27 @@ public static class ConstructablePatch
 
 		var facade = __instance.GetComponent<BuildingFacade>()?.CurrentFacade ?? "DEFAULT_FACADE";
 
-		// Capture connection directions for wires/pipes
-		bool connectsUp = false, connectsDown = false, connectsLeft = false, connectsRight = false;
-		var tileVis = __instance.GetComponent<KAnimGraphTileVisualizer>();
+        // Handle utility connections
+        UtilityConnections utilityConnectionFlags = (UtilityConnections)0;
+        // Capture connection directions for wires/pipes
+        var tileVis = __instance.GetComponent<KAnimGraphTileVisualizer>();
 		if (tileVis != null)
 		{
-			var connections = tileVis.Connections;
-			connectsUp = (connections & UtilityConnections.Up) != 0;
-			connectsDown = (connections & UtilityConnections.Down) != 0;
-			connectsLeft = (connections & UtilityConnections.Left) != 0;
-			connectsRight = (connections & UtilityConnections.Right) != 0;
-			DebugConsole.Log($"[ConstructablePatch] Captured connections for {def.PrefabID}: Up={connectsUp}, Down={connectsDown}, Left={connectsLeft}, Right={connectsRight}");
+			utilityConnectionFlags = tileVis.Connections;
 		}
 
         BuildingUtils.GetLayerInfo(building, out var objectLayer, out var isReplacement);
+
+		/*
+        IHaveUtilityNetworkMgr mgr = def.BuildingComplete.GetComponent<IHaveUtilityNetworkMgr>();
+        if (mgr != null)
+		{
+			var networkManager = mgr.GetNetworkManager();
+			if(networkManager != null)
+			{
+                utilityConnectionFlags = networkManager.GetConnections(cell, false);
+            }
+		}*/
 
         var packet = new BuildCompletePacket
 		{
@@ -56,10 +62,7 @@ public static class ConstructablePatch
 			MaterialTags = materialTags,
 			Temperature = temp,
 			FacadeID = facade,
-			ConnectsUp = connectsUp,
-			ConnectsDown = connectsDown,
-			ConnectsLeft = connectsLeft,
-			ConnectsRight = connectsRight,
+			UtilityConnectionFlags = utilityConnectionFlags,
 			ObjectLayer = objectLayer,
 			IsReplacement = isReplacement
 		};

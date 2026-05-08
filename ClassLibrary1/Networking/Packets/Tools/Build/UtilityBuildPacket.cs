@@ -160,10 +160,10 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 				return;
 			}
 
-			var tags = MaterialTags.Select(t => new Tag(t)).ToList();
-			if (tags.Count == 0)
+			var selected_elements = MaterialTags.Select(t => TagManager.Create(t)).ToList();
+			if (selected_elements.Count == 0)
 			{
-				tags.AddRange(def.DefaultElements());
+				selected_elements.AddRange(def.DefaultElements());
 			}
 			///mirrored from BuildMenu OnRecipeElementsFullySelected
 			BaseUtilityBuildTool tool = def.BuildingComplete.TryGetComponent<Wire>(out _) ? WireBuildTool.Instance : UtilityBuildTool.Instance;
@@ -186,7 +186,7 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 
 			tool.def = def;
 			tool.path = this.path;
-			tool.selectedElements = tags;
+			tool.selectedElements = selected_elements;
 			tool.conduitMgr = conduitManagerHaver.GetNetworkManager();
 
 			ProcessingIncoming = true;
