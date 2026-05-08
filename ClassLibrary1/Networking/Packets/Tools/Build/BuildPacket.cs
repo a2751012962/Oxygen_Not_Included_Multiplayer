@@ -98,7 +98,7 @@ namespace ONI_MP.Networking.Packets.Tools.Build
                 return;
             }
 
-            var selected_elements = MaterialTags.Select(t => new Tag(t)).ToList();
+            var selected_elements = MaterialTags.Select(t => TagManager.Create(t)).ToList();
             Vector3 pos  = Grid.CellToPosCBC(Cell, Grid.SceneLayer.Building);
             GameObject visualizer = Util.KInstantiate(def.BuildingPreview, pos);
 
