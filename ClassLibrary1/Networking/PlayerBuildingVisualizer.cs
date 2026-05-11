@@ -32,21 +32,20 @@ namespace ONI_MP.Networking
 			get => _color;
 			set
 			{
-				if (_color != value)
-				{
-					visualColor = Color.Lerp(value, Color.white, 0.75f);
-					visualColorInvalid = Color.Lerp(value, Color.red, 0.75f);
-				}
+				if (_color == value)
+					return;
+				visualColor = Color.Lerp(value, Color.white, 0.75f);
+				visualColorInvalid = Color.Lerp(value, Color.red, 0.75f);
 				_color = value;
 			}
 		} // Base color
 
 		private VisualizerType _visualizerType = VisualizerType.BUILDING;
-		private Orientation CurrentOrientation;
-		private BuildingDef CurrentDef;
+		private Orientation CurrentOrientation = Orientation.Neutral;
+		private BuildingDef CurrentDef = null;
 
 		private Color currentColor = Color.white; // Color based on if the tile is valid or not
-		private Color visualColor, visualColorInvalid;
+		private Color visualColor = Color.white, visualColorInvalid = Color.red;
 
 
 
@@ -121,7 +120,7 @@ namespace ONI_MP.Networking
 			{
 				visualizer.SetLayerRecursively(LayerMask.NameToLayer("Place"));
 			}
-			UpdatePosition(targetPos);
+			UpdatePosition(targetPos, true);
 		}
 
 		public void UpdateVisualizer(string buildingPrefabId, Vector3 position, Orientation orientation, Color visualColor)
@@ -190,26 +189,21 @@ namespace ONI_MP.Networking
 			if (!Grid.IsValidBuildingCell(Cell))
 			{
 				bool hasReplacementLayer = CurrentDef.ReplacementLayer != ObjectLayer.NumLayers;
-				if (CurrentDef.isKAnimTile)
+
+				if (Grid.Objects[Cell, (int)CurrentDef.TileLayer] == visualizer)
 				{
-					GameObject tileLayerObject = Grid.Objects[Cell, (int)CurrentDef.TileLayer];
-					if (tileLayerObject == null || !tileLayerObject.TryGetComponent<Constructable>(out _))
+					if (CurrentDef.isKAnimTile)
 					{
 						World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, false, SimHashes.Void, Cell);
 					}
-					GameObject replacementLayerObject = hasReplacementLayer ? null : Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer];
-					if (replacementLayerObject == null || replacementLayerObject == visualizer)
-					{
-						World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, true, SimHashes.Void, Cell);
-					}
-				}
-				if (Grid.Objects[Cell, (int)CurrentDef.TileLayer] == visualizer)
-				{
 					Grid.Objects[Cell, (int)CurrentDef.TileLayer] = null;
 				}
 				if (hasReplacementLayer && Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer] == visualizer)
 				{
-					Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer] = null;
+					if (CurrentDef.isKAnimTile)
+					{
+						World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, true, SimHashes.Void, Cell);
+					}
 				}
 				TileVisualizer.RefreshCell(Cell, CurrentDef.TileLayer, CurrentDef.ReplacementLayer);
 			}
@@ -257,7 +251,7 @@ namespace ONI_MP.Networking
 						}
 					}
 				}
-				if(visualizerSeated)
+				if (visualizerSeated)
 					TileVisualizer.RefreshCell(targetCell, CurrentDef.TileLayer, CurrentDef.ReplacementLayer);
 			}
 		}
@@ -268,10 +262,10 @@ namespace ONI_MP.Networking
 			SeatTileVisual(cell);
 		}
 
-		public void UpdatePosition(Vector3 positionTarget)
+		public void UpdatePosition(Vector3 positionTarget, bool force = false)
 		{
 			int cell = Grid.PosToCell(positionTarget);
-			if (cell != Grid.InvalidCell && cell != Cell)
+			if (force || cell != Grid.InvalidCell && cell != Cell)
 			{
 				switch (_visualizerType)
 				{
