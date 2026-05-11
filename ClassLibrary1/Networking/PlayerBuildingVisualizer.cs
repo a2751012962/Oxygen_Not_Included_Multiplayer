@@ -156,6 +156,10 @@ namespace ONI_MP.Networking
 				_visualizerType = VisualizerType.INVALID;
 				return;
 			}
+
+			if (_visualizerType == VisualizerType.INVALID)
+				return;
+
 			Cell = Grid.InvalidCell;
 			_visualizerType = newVisType;
 			BuildingDef def = Assets.GetBuildingDef(buildingPrefabId);
