@@ -88,9 +88,13 @@ namespace ONI_MP.Networking.Packets.Tools.Build
             {
                 DebugConsole.LogWarning($"[BuildCompletePacket] Unknown building def: {PrefabID}");
                 return;
-            }
+			}
+			foreach (PlayerCursor cursor in MultiplayerSession.PlayerCursors.Values)
+			{
+				cursor.buildingVisualiser.ForceCleanupTile(Cell);
+			}
 
-            var tags = MaterialTags.Select(t => new Tag(t)).ToList();
+			var tags = MaterialTags.Select(t => new Tag(t)).ToList();
 
             if (tags.Count == 0)
             {

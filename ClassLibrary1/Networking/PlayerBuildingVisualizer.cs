@@ -153,8 +153,8 @@ namespace ONI_MP.Networking
 			{
 				CleanTileVisual();
 			}
-			Cell = Grid.InvalidCell;
 			DestroyVisualizer();
+			Cell = Grid.InvalidCell;
 
 			if (string.IsNullOrEmpty(buildingPrefabId))
 			{
@@ -191,6 +191,12 @@ namespace ONI_MP.Networking
 			}
 		}
 
+		public void ForceCleanupTile(int cellToClean)
+		{
+			if(cellToClean == Cell)
+				CleanTileVisual();
+		}
+
 		void CleanTileVisual()
 		{
 			if (!Grid.IsValidBuildingCell(Cell))
@@ -198,29 +204,20 @@ namespace ONI_MP.Networking
 				return;
 			}
 			ColoredCells.Remove(Cell);
+			if (!CurrentDef.isKAnimTile)
+				return;
 			bool hasReplacementLayer = CurrentDef.ReplacementLayer != ObjectLayer.NumLayers;
-			if (CurrentDef.isKAnimTile)
-			{
-				GameObject tileLayerObject = Grid.Objects[Cell, (int)CurrentDef.TileLayer];
-				if (tileLayerObject == null || !tileLayerObject.TryGetComponent<Constructable>(out _))
-				{
-					World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, false, SimHashes.Void, Cell);
-				}
-				GameObject replacementLayerObject = hasReplacementLayer ? null : Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer];
-				if (replacementLayerObject == null || replacementLayerObject == visualizer)
-				{
-					World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, true, SimHashes.Void, Cell);
-				}
-			}
 			if (Grid.Objects[Cell, (int)CurrentDef.TileLayer] == visualizer)
 			{
+				World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, false, SimHashes.Void, Cell);
 				Grid.Objects[Cell, (int)CurrentDef.TileLayer] = null;
 			}
 			if (hasReplacementLayer && Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer] == visualizer)
 			{
+				World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, true, SimHashes.Void, Cell);
 				Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer] = null;
 			}
-			TileVisualizer.RefreshCell(Cell, CurrentDef.TileLayer, CurrentDef.ReplacementLayer);		
+			TileVisualizer.RefreshCell(Cell, CurrentDef.TileLayer, CurrentDef.ReplacementLayer);
 		}
 		private bool CanReplace(int cell)
 		{
@@ -238,7 +235,11 @@ namespace ONI_MP.Networking
 
 				if (Grid.Objects[targetCell, (int)CurrentDef.TileLayer] == visualizer
 				|| Grid.Objects[targetCell, (int)CurrentDef.ReplacementLayer] == visualizer)
+				{
+					UpdateVisualColor(Cell);
+					ColoredCells[Cell] = currentColor;
 					return;
+				}
 
 				bool visualizerSeated = false;
 				bool hasReplacementLayer = CurrentDef.ReplacementLayer != ObjectLayer.NumLayers;
@@ -288,7 +289,7 @@ namespace ONI_MP.Networking
 		public void UpdatePosition(Vector3 positionTarget, bool force = false)
 		{
 			int cell = Grid.PosToCell(positionTarget);
-			if (force || cell != Grid.InvalidCell 
+			if (force || cell != Grid.InvalidCell
 				//&& cell != Cell
 				)
 			{

@@ -97,8 +97,11 @@ namespace ONI_MP.Networking.Packets.Tools.Build
                 DebugConsole.LogWarning($"[BuildPacket] Unknown building def: {PrefabID}");
                 return;
             }
-
-            var selected_elements = MaterialTags.Select(t => TagManager.Create(t)).ToList();
+			foreach (PlayerCursor cursor in MultiplayerSession.PlayerCursors.Values)
+			{
+				cursor.buildingVisualiser.ForceCleanupTile(Cell);
+			}
+			var selected_elements = MaterialTags.Select(t => TagManager.Create(t)).ToList();
             Vector3 pos  = Grid.CellToPosCBC(Cell, Grid.SceneLayer.Building);
             GameObject visualizer = Util.KInstantiate(def.BuildingPreview, pos);
 
