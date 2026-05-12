@@ -142,13 +142,17 @@ namespace ONI_MP.Networking.Components
                                     EnergyGenerator gen = generatorInstance as EnergyGenerator;
                                     if (gen != null)
                                     {
-                                        InputItem inputItem = gen.formula.inputs[0];
-                                        float mass = gen.storage.GetMassAvailable(inputItem.tag);
-                                        float storedMass = inputItem.maxStoredMass;
+                                        // Coal generator
+                                        if (gen.hasMeter)
+                                        {
+                                            InputItem inputItem = gen.formula.inputs[0];
+                                            float mass = gen.storage.GetMassAvailable(inputItem.tag);
+                                            float storedMass = inputItem.maxStoredMass;
 
-                                        optionalValues = new float[2];
-                                        optionalValues[0] = mass;
-                                        optionalValues[1] = storedMass;
+                                            optionalValues = new float[2];
+                                            optionalValues[0] = mass;
+                                            optionalValues[1] = storedMass;
+                                        }
                                     }
                                     break;
                                 default:
