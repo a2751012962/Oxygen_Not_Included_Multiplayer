@@ -38,7 +38,7 @@ namespace ONI_MP.Networking.Components
 			using var _ = Profiler.Scope();
 
 			AssignColor();
-        }
+		}
 
 		public void ResetColor()
 		{
@@ -51,19 +51,19 @@ namespace ONI_MP.Networking.Components
 		{
 			using var _ = Profiler.Scope();
 
-            bool useRandom = Configuration.GetClientProperty<bool>("UseRandomPlayerColor");
+			bool useRandom = Configuration.GetClientProperty<bool>("UseRandomPlayerColor");
 			if (useRandom)
 			{
 				color = UnityEngine.Random.ColorHSV(0f, 1f, 0.6f, 1f, 0.8f, 1f);
-                DebugConsole.Log("[CursorManager] Setting cursor color to random color " + color.ToString());
-            }
-            else
+				DebugConsole.Log("[CursorManager] Setting cursor color to random color " + color.ToString());
+			}
+			else
 			{
 				Color32 set_color = Configuration.Instance.CursorColor;
 				color = set_color;
 				DebugConsole.Log("[CursorManager] Setting cursor color from config to " + set_color.ToString() + " | " + color.ToString());
 			}
-        }
+		}
 
 		private void Update()
 		{
@@ -117,11 +117,18 @@ namespace ONI_MP.Networking.Components
 			var interfaceTool = PlayerController.Instance.ActiveTool;
 			if (interfaceTool is BuildTool buildTool)
 			{
-				if(buildTool.def != null)
+				if (buildTool.def != null)
 				{
 					buildToolPrefabId = buildTool.def.PrefabID;
 					buildingOrientation = buildTool.buildingOrientation;
-                }
+				}
+			}
+			else if (interfaceTool is UtilityBuildTool utilityBuildTool)
+			{
+				if (utilityBuildTool.def != null)
+				{
+					buildToolPrefabId = utilityBuildTool.def.PrefabID;
+				}
 			}
 
 			var packet = new PlayerCursorPacket

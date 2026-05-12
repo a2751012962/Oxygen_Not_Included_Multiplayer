@@ -122,6 +122,14 @@ namespace ONI_MP.Networking
 			}
 			UpdatePosition(targetPos, true);
 		}
+		void DestroyVisualizer()
+		{
+			if (!visualizer.IsNullOrDestroyed())
+			{
+				Util.KDestroyGameObject(visualizer); // Destroy the visualiser
+				visualizer = null;
+			}
+		}
 
 		public void UpdateVisualizer(string buildingPrefabId, Vector3 position, Orientation orientation, Color visualColor)
 		{
@@ -143,27 +151,24 @@ namespace ONI_MP.Networking
 			{
 				CleanTileVisual();
 			}
-			// Destroy the visualiser if nothing is selected
-			if (string.IsNullOrEmpty(buildingPrefabId) || !lastPrefabId.Equals(buildingPrefabId))
+			Cell = Grid.InvalidCell;
+			DestroyVisualizer();
+
+			if (string.IsNullOrEmpty(buildingPrefabId))
 			{
-				if (!visualizer.IsNullOrDestroyed())
-				{
-					Util.KDestroyGameObject(visualizer); // Destroy the visualiser
-					visualizer = null;
-				}
 				CurrentDef = null;
+				lastPrefabId = string.Empty;
 				_visualizerType = VisualizerType.INVALID;
 				return;
 			}
-
-			if (_visualizerType == VisualizerType.INVALID)
-				return;
-
-			Cell = Grid.InvalidCell;
 			_visualizerType = newVisType;
-			BuildingDef def = Assets.GetBuildingDef(buildingPrefabId);
-			if (def == CurrentDef) // Same def somehow leaked through
+
+			if (newVisType == VisualizerType.INVALID)
 				return;
+
+			BuildingDef def = Assets.GetBuildingDef(buildingPrefabId);
+			//if (def == CurrentDef) // Same def somehow leaked through
+			//	return;
 			CurrentDef = def;
 			lastPrefabId = buildingPrefabId;
 			InstantiateNewVisualizer(position);
@@ -190,20 +195,26 @@ namespace ONI_MP.Networking
 			{
 				bool hasReplacementLayer = CurrentDef.ReplacementLayer != ObjectLayer.NumLayers;
 
-				if (Grid.Objects[Cell, (int)CurrentDef.TileLayer] == visualizer)
+				if (CurrentDef.isKAnimTile)
 				{
-					if (CurrentDef.isKAnimTile)
+					GameObject tileLayerObject = Grid.Objects[Cell, (int)CurrentDef.TileLayer];
+					if (tileLayerObject == null || !tileLayerObject.TryGetComponent<Constructable>(out _))
 					{
 						World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, false, SimHashes.Void, Cell);
 					}
+					GameObject replacementLayerObject = hasReplacementLayer ? null : Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer];
+					if (replacementLayerObject == null || replacementLayerObject == visualizer)
+					{
+						World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, true, SimHashes.Void, Cell);
+					}
+				}
+				if (Grid.Objects[Cell, (int)CurrentDef.TileLayer] == visualizer)
+				{
 					Grid.Objects[Cell, (int)CurrentDef.TileLayer] = null;
 				}
 				if (hasReplacementLayer && Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer] == visualizer)
 				{
-					if (CurrentDef.isKAnimTile)
-					{
-						World.Instance.blockTileRenderer.RemoveBlock(CurrentDef, true, SimHashes.Void, Cell);
-					}
+					Grid.Objects[Cell, (int)CurrentDef.ReplacementLayer] = null;
 				}
 				TileVisualizer.RefreshCell(Cell, CurrentDef.TileLayer, CurrentDef.ReplacementLayer);
 			}
@@ -221,6 +232,11 @@ namespace ONI_MP.Networking
 			visualizer.transform.SetPosition(Grid.CellToPosCBC(targetCell, CurrentDef.SceneLayer));
 			if (targetCell != -1 && Grid.IsValidBuildingCell(targetCell))
 			{
+
+				if (Grid.Objects[targetCell, (int)CurrentDef.TileLayer] == visualizer
+				|| Grid.Objects[targetCell, (int)CurrentDef.ReplacementLayer] == visualizer)
+					return;
+
 				bool visualizerSeated = false;
 				bool hasReplacementLayer = CurrentDef.ReplacementLayer != ObjectLayer.NumLayers;
 
@@ -246,6 +262,7 @@ namespace ONI_MP.Networking
 								if (replacing && !visualizerSeated && Grid.Objects[targetCell, (int)CurrentDef.ReplacementLayer] == null)
 								{
 									Grid.Objects[targetCell, (int)CurrentDef.ReplacementLayer] = visualizer;
+									visualizerSeated = true;
 								}
 							}
 						}
