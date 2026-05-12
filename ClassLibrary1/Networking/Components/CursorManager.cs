@@ -123,7 +123,7 @@ namespace ONI_MP.Networking.Components
 					buildingOrientation = buildTool.buildingOrientation;
 				}
 			}
-			else if (interfaceTool is UtilityBuildTool utilityBuildTool)
+			else if (interfaceTool is BaseUtilityBuildTool utilityBuildTool)
 			{
 				if (utilityBuildTool.def != null)
 				{
