@@ -5,6 +5,7 @@ using ONI_MP.Networking.Packets.World;
 using ONI_MP.Patches.World;
 using Shared.Profiling;
 using UnityEngine;
+using static EnergyGenerator;
 using static STRINGS.UI.OVERLAYS;
 
 namespace ONI_MP.Networking.Components
@@ -18,6 +19,15 @@ namespace ONI_MP.Networking.Components
 			GENERATOR
 		}
 
+        public enum GeneratorType
+        {
+            UNKNOWN,
+            MANUAL,
+            ENERGY,
+            MODULE,
+            STATERPILLER
+        }
+
 		private float sendInterval = 0.5f; // Sync every 500ms
 		private float timer;
 
@@ -28,6 +38,7 @@ namespace ONI_MP.Networking.Components
 
 		private float lastSentValue;
 		private bool lastSentActive;
+        private float[] lastOptionalValues;
 
 		// Grace period
 		private bool _initialized = false;
@@ -35,6 +46,10 @@ namespace ONI_MP.Networking.Components
 		private const float INITIAL_DELAY = 5f;
 
 		public StructureType structureType = StructureType.UNCATEGORIZED;
+
+        // Generator specific
+        public GeneratorType generatorType = GeneratorType.UNKNOWN;
+        public object generatorInstance;
 
 		public override void OnSpawn()
 		{
@@ -55,6 +70,8 @@ namespace ONI_MP.Networking.Components
 					break;
 				case StructureType.GENERATOR:
 					generator = GetComponent<Generator>();
+                    generatorType = DetermineGeneratorType(this.gameObject, out var gen);
+                    generatorInstance = gen;
                     break;
                 case StructureType.UNCATEGORIZED:
                 default:
@@ -72,8 +89,8 @@ namespace ONI_MP.Networking.Components
 			if (MultiplayerSession.IsHost)
 			{
 				// Skip if no clients connected
-			    if (!MultiplayerSession.SessionHasPlayers)
-					return;
+			  //  if (!MultiplayerSession.SessionHasPlayers)
+					//return;
 
 				// Grace period after world load
 				if (!_initialized)
@@ -102,6 +119,7 @@ namespace ONI_MP.Networking.Components
 
                 float currentValue = 0f;
                 bool currentActive = false;
+                float[] optionalValues = [];
 
                 if (operational != null)
                     currentActive = operational.IsActive;
@@ -118,6 +136,24 @@ namespace ONI_MP.Networking.Components
                     case StructureType.GENERATOR:
                         if (generator != null)
                         {
+                            switch(generatorType)
+                            {
+                                case GeneratorType.ENERGY:
+                                    EnergyGenerator gen = generatorInstance as EnergyGenerator;
+                                    if (gen != null)
+                                    {
+                                        InputItem inputItem = gen.formula.inputs[0];
+                                        float mass = gen.storage.GetMassAvailable(inputItem.tag);
+                                        float storedMass = inputItem.maxStoredMass;
+
+                                        optionalValues = new float[2];
+                                        optionalValues[0] = mass;
+                                        optionalValues[1] = storedMass;
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
                             currentValue = generator.JoulesAvailable;
                         }
                         break;
@@ -128,17 +164,20 @@ namespace ONI_MP.Networking.Components
                 }
 
                 // Sync if changed significantly
-                if (Mathf.Abs(currentValue - lastSentValue) > 0.1f || currentActive != lastSentActive)
+                if (Mathf.Abs(currentValue - lastSentValue) > 0.1f || currentActive != lastSentActive || OptionalValuesChanged(optionalValues, lastOptionalValues))
                 {
                     lastSentValue = currentValue;
                     lastSentActive = currentActive;
+                    lastOptionalValues = optionalValues;
 
                     var packet = new StructureStatePacket
                     {
                         Cell = cell,
                         Value = currentValue,
                         IsActive = currentActive,
-                        StructureType = structureType
+                        StructureType = structureType,
+                        GeneratorType = generatorType,
+                        OptionalValues = optionalValues
                     };
 
                     PacketSender.SendToAllClients(packet, PacketSendMode.Unreliable);
@@ -148,6 +187,21 @@ namespace ONI_MP.Networking.Components
             {
                 // Silent fail - Structure may not be ready
             }
+        }
+
+        private bool OptionalValuesChanged(float[] a, float[] b, float epsilon = 0.01f)
+        {
+            if (a == null && b == null) return false;
+            if (a == null || b == null) return true;
+            if (a.Length != b.Length) return true;
+
+            for (int i = 0; i < a.Length; i++)
+            {
+                if (Mathf.Abs(a[i] - b[i]) > epsilon)
+                    return true;
+            }
+
+            return false;
         }
 
         public static void HandlePacket(StructureStatePacket packet)
@@ -217,7 +271,73 @@ namespace ONI_MP.Networking.Components
             var generator = go.GetComponent<Generator>();
             if(generator == null) return;
 
+            switch(packet.GeneratorType)
+            {
+                case GeneratorType.ENERGY:
+                    if (packet.OptionalValues.Length > 0)
+                    {
+                        EnergyGenerator gen = generator as EnergyGenerator;
+                        if (gen != null)
+                        {
+                            float mass = packet.OptionalValues[0];
+                            float storedMass = packet.OptionalValues[1];
+                            // TODO: update the stored mass later
+                            UpdateEnergyGeneratorMeter(gen, mass, storedMass);
+                        }
+                    }
+                    break;
+                // Don't need to do anything with these yet
+                case GeneratorType.MANUAL:
+                case GeneratorType.MODULE:
+                case GeneratorType.STATERPILLER:
+                default:
+                    break;
+            }
+
             generator.AssignJoulesAvailable(packet.Value);
+        }
+
+        private static void UpdateEnergyGeneratorMeter(EnergyGenerator generator, float mass, float storedMass)
+        {
+            if (generator.hasMeter)
+            {
+                float meterPercent = Mathf.Clamp01(mass / storedMass);
+                generator.meter.SetPositionPercent(meterPercent);
+            }
+        }
+
+        private static GeneratorType DetermineGeneratorType(GameObject go, out object generator)
+        {
+            ManualGenerator manualGenerator = go.GetComponent<ManualGenerator>();
+            if (manualGenerator != null)
+            {
+                generator = manualGenerator;
+                return GeneratorType.MANUAL;
+            }
+
+            EnergyGenerator energyGenerator = go.GetComponent<EnergyGenerator>();
+            if (energyGenerator != null)
+            {
+                generator = energyGenerator;
+                return GeneratorType.ENERGY;
+            }
+
+            ModuleGenerator moduleGenerator = go.GetComponent<ModuleGenerator>();
+            if (moduleGenerator != null)
+            {
+                generator = moduleGenerator;
+                return GeneratorType.MODULE;
+            }
+
+                StaterpillarGenerator statepillerGenerator = go.GetComponent<StaterpillarGenerator>();
+            if (moduleGenerator != null)
+            {
+                generator = statepillerGenerator;
+                return GeneratorType.STATERPILLER;
+            }
+
+            generator = null;
+            return GeneratorType.UNKNOWN;
         }
         #endregion
 
