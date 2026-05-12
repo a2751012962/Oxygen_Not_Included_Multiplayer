@@ -13,6 +13,8 @@ namespace ONI_MP.Networking
 	/// </summary>
 	public class PlayerBuildingVisualizer
 	{
+		public static Dictionary<int, Color> ColoredCells = [];
+
 		public enum VisualizerType
 		{
 			BUILDING,
@@ -195,7 +197,7 @@ namespace ONI_MP.Networking
 			{
 				return;
 			}
-
+			ColoredCells.Remove(Cell);
 			bool hasReplacementLayer = CurrentDef.ReplacementLayer != ObjectLayer.NumLayers;
 			if (CurrentDef.isKAnimTile)
 			{
@@ -270,7 +272,11 @@ namespace ONI_MP.Networking
 					}
 				}
 				if (visualizerSeated)
+				{
+					UpdateVisualColor(Cell);
+					ColoredCells[Cell] = currentColor;
 					TileVisualizer.RefreshCell(targetCell, CurrentDef.TileLayer, CurrentDef.ReplacementLayer);
+				}
 			}
 		}
 
