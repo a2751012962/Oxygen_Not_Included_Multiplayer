@@ -31,7 +31,7 @@ namespace ONI_MP.Patches.World
                     DoDiseaseTransfer = false,
                     FxPrefix = Storage.FXPrefix.PickedUp,
                     ConsumedPrefabHash = go.PrefabID().GetHashCode(),
-                    ConsumedAmount = pe?.Units ?? 0f
+                    ConsumedAmount = pe?.Mass ?? 0f
                 });
             }
         }
@@ -67,9 +67,9 @@ namespace ONI_MP.Patches.World
                             NetId = identity.NetId,
                             StorageNetId = storageIdentity.NetId,
                             DoDiseaseTransfer = do_disease_transfer,
-                            FxPrefix = Storage.FXPrefix.Delivered,
+                            FxPrefix = Storage.FXPrefix.PickedUp,
                             ConsumedPrefabHash = go.PrefabID().GetHashCode(),
-                            ConsumedAmount = pe?.Units ?? 0
+                            ConsumedAmount = pe?.Mass ?? 0
                         });
                     }
                     else
@@ -79,9 +79,9 @@ namespace ONI_MP.Patches.World
                             NetId = 0, // FX Only
                             StorageNetId = storageIdentity.NetId,
                             DoDiseaseTransfer = false,
-                            FxPrefix = Storage.FXPrefix.Delivered,
+                            FxPrefix = Storage.FXPrefix.PickedUp,
                             ConsumedPrefabHash = go.PrefabID().GetHashCode(),
-                            ConsumedAmount = pe?.Units ?? 0
+                            ConsumedAmount = pe?.Mass ?? 0
                         });
                     }
                 }
