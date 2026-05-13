@@ -227,7 +227,10 @@ namespace ONI_MP.Networking
 			CurrentDef = def;
 			lastPrefabId = buildingPrefabId;
 			if (newVisType == VisualizerType.TILE)
+			{
 				SetTileRenderer();
+				UpdateTileVisual(Grid.PosToCell(position));
+			}
 			else
 				InstantiateNewVisualizer(position);
 		}
