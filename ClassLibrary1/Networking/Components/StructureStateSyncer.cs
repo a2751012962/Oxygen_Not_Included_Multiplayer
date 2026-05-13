@@ -392,6 +392,7 @@ namespace ONI_MP.Networking.Components
             RebuildStorageFromData(storage, packet.OptionalValues);
         }
 
+        // TODO: Add Units
         private static void EncodeStorageContents(Storage storage, out float[] optionalValues)
         {
             var entries = new Dictionary<SimHashes, float>();
