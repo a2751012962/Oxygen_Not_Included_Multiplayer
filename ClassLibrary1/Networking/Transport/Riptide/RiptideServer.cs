@@ -21,7 +21,6 @@ namespace ONI_MP.Networking.Transport.Lan
         private Dictionary<ulong, float> _loadingClients = new Dictionary<ulong, float>();
         private List<ulong> _expiredLoadingClients = new List<ulong>();
         private HashSet<ulong> _reconnectedFromLoad = new HashSet<ulong>();
-        private const float LOADING_TIMEOUT = 30f;
 
         public TcpFileTransferServer TcpTransfer => _tcpTransfer;
 
@@ -61,7 +60,7 @@ namespace ONI_MP.Networking.Transport.Lan
             int maxClients = Configuration.Instance.Host.MaxLobbySize;
 
             _server = new Server("Lan/Riptide");
-            _server.TimeoutTime = 30000;
+            _server.TimeoutTime = Configuration.Instance.Host.TimeoutSeconds * 1000;
             _server.MessageReceived += OnServerMessageReceived;
             _server.ConnectionFailed += OnClientConnectionFailed;
             _server.ClientConnected += ServerOnClientConnected;
@@ -270,7 +269,7 @@ namespace ONI_MP.Networking.Transport.Lan
                 _expiredLoadingClients.Clear();
                 foreach (var kvp in _loadingClients)
                 {
-                    if (now - kvp.Value > LOADING_TIMEOUT)
+                    if (now - kvp.Value > Configuration.Instance.Host.TimeoutSeconds)
                     {
                         _expiredLoadingClients.Add(kvp.Key);
                     }

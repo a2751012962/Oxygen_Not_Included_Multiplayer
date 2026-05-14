@@ -34,14 +34,14 @@ namespace ONI_MP.Networking.Transfer
 				{
 					client.ReceiveBufferSize = 65536;
 					IAsyncResult ar = client.BeginConnect(hostIp, tcpPort, null, null);
-					if (!ar.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(10)))
+					if (!ar.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(Configuration.Instance.Client.TimeoutSeconds)))
 					{
 						throw new TimeoutException("TCP connection timed out");
 					}
 					client.EndConnect(ar);
 
 					NetworkStream stream = client.GetStream();
-					stream.ReadTimeout = 30000;
+					stream.ReadTimeout = Configuration.Instance.Client.TimeoutSeconds * 1000;
 
 					byte[] idBytes = BitConverter.GetBytes(clientId);
 					stream.Write(idBytes, 0, 8);

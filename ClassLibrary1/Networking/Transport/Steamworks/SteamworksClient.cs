@@ -51,7 +51,16 @@ namespace ONI_MP.Networking.Transport.Steam
             var identity = new SteamNetworkingIdentity();
             identity.SetSteamID64(hostSteamId);
 
-            Connection = SteamNetworkingSockets.ConnectP2P(ref identity, 0, 0, null);
+            var options = new SteamNetworkingConfigValue_t[2];
+            options[0].m_eValue = ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_TimeoutInitial;
+            options[0].m_eDataType = ESteamNetworkingConfigDataType.k_ESteamNetworkingConfig_Int32;
+            options[0].m_val.m_int32 = Configuration.Instance.Client.TimeoutSeconds * 1000;
+
+            options[1].m_eValue = ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_TimeoutConnected;
+            options[1].m_eDataType = ESteamNetworkingConfigDataType.k_ESteamNetworkingConfig_Int32;
+            options[1].m_val.m_int32 = Configuration.Instance.Client.TimeoutSeconds * 1000;
+
+            Connection = SteamNetworkingSockets.ConnectP2P(ref identity, 0, options.Length, options);
             DebugConsole.Log($"[GameClient] ConnectP2P returned handle: {Connection.Value.m_HSteamNetConnection}");
         }
 

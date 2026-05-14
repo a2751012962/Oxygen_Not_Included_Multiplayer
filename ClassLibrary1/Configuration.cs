@@ -35,6 +35,14 @@ namespace ONI_MP
             set => Host.SaveFileTransferChunkKB = Mathf.Clamp(value, 1, 1024);
         }
 
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.HOST_SETTINGS.SERVER_SETTINGS.TIMEOUT_SECONDS", "STRINGS.UI.CONFIGURATION.TOOLTIPS.HOST_SETTINGS.SERVER_SETTINGS.TIMEOUT_SECONDS", "STRINGS.UI.CONFIGURATION.HEADERS.A_HOST_SETTINGS")]
+        [JsonIgnore]
+        public int HostTimeoutSeconds
+        {
+            get => Host.TimeoutSeconds;
+            set => Host.TimeoutSeconds = Mathf.Max(value, 30);
+        }
+
         [Option("STRINGS.UI.CONFIGURATION.TITLES.HOST_SETTINGS.SERVER_SETTINGS.HARD_SYNC_AT_CYCLE_START", "STRINGS.UI.CONFIGURATION.TOOLTIPS.HOST_SETTINGS.SERVER_SETTINGS.HARD_SYNC_AT_CYCLE_START", "STRINGS.UI.CONFIGURATION.HEADERS.A_HOST_SETTINGS")]
         [JsonIgnore]
         public bool HardSyncOnCycleStart
@@ -49,6 +57,14 @@ namespace ONI_MP
         {
             get => Client.MaxMessagesPerPoll;
             set => Client.MaxMessagesPerPoll = Mathf.Clamp(value, 1, 1024);
+        }
+
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.CLIENT_SETTINGS.TIMEOUT_SECONDS", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CLIENT_SETTINGS.TIMEOUT_SECONDS", "STRINGS.UI.CONFIGURATION.HEADERS.B_CLIENT_SETTINGS")]
+        [JsonIgnore]
+        public int ClientTimeoutSeconds
+        {
+            get => Client.TimeoutSeconds;
+            set => Client.TimeoutSeconds = Mathf.Max(value, 30);
         }
 
         [Option("STRINGS.UI.CONFIGURATION.TITLES.CURSOR_SETTINGS.RANDOM_COLOR", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CURSOR_SETTINGS.RANDOM_COLOR", "STRINGS.UI.CONFIGURATION.HEADERS.C_CURSOR_SETTINGS")]
@@ -154,6 +170,7 @@ namespace ONI_MP
         [JsonProperty] public int MaxLobbySize { get; set; } = 4;
         [JsonProperty] public int MaxMessagesPerPoll { get; set; } = 128;
         [JsonProperty] public int SaveFileTransferChunkKB { get; set; } = 256;
+        [JsonProperty] public int TimeoutSeconds { get; set; } = 30;
 
         [JsonProperty] public LanSettings LanSettings { get; set; } = new LanSettings();
         [JsonProperty] public LobbySettings Lobby { get; set; } = new LobbySettings();
@@ -170,6 +187,7 @@ namespace ONI_MP
         [JsonProperty] public LanSettings LanSettings { get; set; } = new LanSettings();
         [JsonProperty] public bool PuftAsLoadingIcon { get; set; } = true;
         [JsonProperty] public bool UseCustomLoadingScreenColor { get; set; } = true;
+        [JsonProperty] public int TimeoutSeconds { get; set; } = 30;
     }
 
     [Serializable]

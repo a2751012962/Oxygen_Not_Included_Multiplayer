@@ -59,9 +59,9 @@ namespace ONI_MP.Networking.Transport.Lan
             MultiplayerSession.ServerIp = ip;
             MultiplayerSession.ServerPort = port;
             _client = new Client("RiptideClient");
-            _client.TimeoutTime = 30000;
+            _client.TimeoutTime = Configuration.Instance.Client.TimeoutSeconds * 1000;
 
-            int timeout = 10;
+            int timeout = Configuration.Instance.Client.TimeoutSeconds;
             _client.Connected += OnConnectedToServer;
             _client.Disconnected += OnDisconnectedFromServer;
             _client.MessageReceived += OnMessageRecievedFromServer;

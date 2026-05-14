@@ -39,10 +39,19 @@ namespace ONI_MP.Networking.Transport.Steam
             ChatScreen.QueueMessage(pending);
 
             // Create listen socket for P2P
+            var options = new SteamNetworkingConfigValue_t[2];
+            options[0].m_eValue = ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_TimeoutInitial;
+            options[0].m_eDataType = ESteamNetworkingConfigDataType.k_ESteamNetworkingConfig_Int32;
+            options[0].m_val.m_int32 = Configuration.Instance.Host.TimeoutSeconds * 1000;
+
+            options[1].m_eValue = ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_TimeoutConnected;
+            options[1].m_eDataType = ESteamNetworkingConfigDataType.k_ESteamNetworkingConfig_Int32;
+            options[1].m_val.m_int32 = Configuration.Instance.Host.TimeoutSeconds * 1000;
+
             ListenSocket = SteamNetworkingSockets.CreateListenSocketP2P(
                     0, // Virtual port
-                    0, // nOptions
-                    null // pOptions
+                    options.Length,
+                    options
             );
 
             if (ListenSocket.m_HSteamListenSocket == 0)
