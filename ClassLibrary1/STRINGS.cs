@@ -450,7 +450,6 @@ namespace ONI_MP
 				public static LocString LOBBY_VISIBILITY_FRIENDSONLY = "Friends Only";
 			}
 
-
 			public class MP_SCREEN
 			{
 				public class MAINMENU
@@ -666,6 +665,10 @@ namespace ONI_MP
 				public class TOPBAR
 				{
 					public static LocString LABEL = "Multiplayer";
+				}
+				public class ADDITIONALHOSTSETTINGS
+				{
+					public static LocString TITLE = "Additional Lobby Settings";
 				}
 			}
 

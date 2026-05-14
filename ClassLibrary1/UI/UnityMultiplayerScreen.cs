@@ -1,11 +1,18 @@
+using Delaunay.Geo;
+using Epic.OnlineServices;
+using Klei.CustomSettings;
 using NodeEditorFramework;
 using ONI_MP.DebugTools;
+using ONI_MP.Menus;
 using ONI_MP.Misc;
 using ONI_MP.Networking;
 using ONI_MP.Networking.Transport.Steamworks;
+using ONI_MP.Patches.ToolPatches;
 using ONI_MP.UI.Components;
 using ONI_MP.UI.lib;
+using PeterHan.PLib.Options;
 using Shared.Helpers;
+using Shared.Profiling;
 using Steamworks;
 using System;
 using System.Collections;
@@ -13,7 +20,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Shared.Profiling;
 using UI.lib.UI.FUI;
 using UI.lib.UIcmp;
 using UnityEngine;
@@ -22,16 +28,13 @@ using static ONI_MP.STRINGS.UI.MP_SCREEN.HOSTMENU;
 using static ONI_MP.STRINGS.UI.MP_SCREEN.HOSTMENU.LOBBYSIZE;
 using static ONI_MP.STRINGS.UI.PAUSESCREEN;
 using static ONI_MP.UI.UnityMultiplayerScreen;
-using ONI_MP.Patches.ToolPatches;
-using PeterHan.PLib.Options;
-using ONI_MP.Menus;
 
 namespace ONI_MP.UI
 {
 	internal class UnityMultiplayerScreen : FScreen
 	{
 		enum JoinMode
-		{				
+		{
 			Steam,
 			Code,
 			LAN
@@ -108,6 +111,12 @@ namespace ONI_MP.UI
 		LobbyEntryUI LobbyEntryPrefab;
 		Dictionary<LobbyListEntry, LobbyEntryUI> Lobbies = [];
 
+		//AdditionalLobbySettingsSegment
+		GameObject TogglePrefab, CyclePrefab;
+		GameObject SettingsContainer;
+		Dictionary<string, FToggle> SettingsToggles = [];
+		Dictionary<string, FCycle> SettingsCycles = [];
+
 		Callback<LobbyDataUpdate_t> lobbyDataCallback;
 
 		bool init = false;
@@ -175,7 +184,7 @@ namespace ONI_MP.UI
 				JoinPortInput.Text = Configuration.Instance.Client.LanSettings.Port.ToString();
 			}
 
-            HostSteamTab = transform.Find("HostMenu/SteamHosting").gameObject;
+			HostSteamTab = transform.Find("HostMenu/SteamHosting").gameObject;
 			HostLanTab = transform.Find("HostMenu/LanHosting").gameObject;
 			HostSteamToggle = transform.Find("HostMenu/HostViaButtons/Steam").gameObject.AddOrGet<FToggleButton>();
 			HostSteamToggle.OnClick += () => SetHostVia(HostMode.Steam);
@@ -194,13 +203,13 @@ namespace ONI_MP.UI
 			}
 
 
-            LobbySize = transform.Find("HostMenu/LobbySize/LobbySizeInput").gameObject.AddOrGet<FInputField2>();
+			LobbySize = transform.Find("HostMenu/LobbySize/LobbySizeInput").gameObject.AddOrGet<FInputField2>();
 			LobbySize.Text = NetworkConfig.LOBBY_SIZE_DEFAULT.ToString();
 
-			if(!string.IsNullOrEmpty(Configuration.Instance.Host.MaxLobbySize.ToString()))
+			if (!string.IsNullOrEmpty(Configuration.Instance.Host.MaxLobbySize.ToString()))
 			{
 				LobbySize.Text = Configuration.Instance.Host.MaxLobbySize.ToString();
-            }
+			}
 
 			LobbySize.OnValueChanged.AddListener(ClampLobbySize);
 			IncreaseSize = transform.Find("HostMenu/LobbySize/LobbySizeInput/Increase").gameObject.AddOrGet<FButton>();
@@ -215,13 +224,13 @@ namespace ONI_MP.UI
 			PrivateLobbyCheckbox.SetOnFromCode(true);
 			TintLobbyState(true);
 			PrivateLobbyCheckbox.OnChange += (on) => TintLobbyState(on);
-			
+
 			PasswortInput = transform.Find("HostMenu/SteamHosting/PasswordInput").gameObject.AddOrGet<FInputField2>();
 			PasswortInput.Text = string.Empty;
 
 			AdditionalLobbySettings = transform.Find("HostMenu/AdditionalSettings").gameObject.AddOrGet<FButton>();
 			AdditionalLobbySettings.SetInteractable(true);
-			AdditionalLobbySettings.OnClick += () => ServerSettingsDialog.Show();
+			AdditionalLobbySettings.OnClick += ToggleAdditionalHostSettingsSegment;
 			//UIUtils.AddSimpleTooltipToObject(AdditionalLobbySettings.gameObject, WORK_IN_PROGRESS);
 
 			StartHosting = transform.Find("HostMenu/Buttons/StartHosting").gameObject.AddOrGet<FButton>();
@@ -234,6 +243,13 @@ namespace ONI_MP.UI
 			LobbyFilter = transform.Find("LobbyList/SearchBar/Input").gameObject.AddOrGet<FInputField2>();
 			LobbyFilter.Text = string.Empty;
 			LobbyListContainer = transform.Find("LobbyList/ScrollArea/Content").gameObject;
+
+			SettingsContainer = transform.Find("AdditionalHostSettings/ScrollArea/Content").gameObject;
+			TogglePrefab = transform.Find("AdditionalHostSettings/ScrollArea/Content/TogglePrefab").gameObject;
+			TogglePrefab.SetActive(false);
+			CyclePrefab = transform.Find("AdditionalHostSettings/ScrollArea/Content/SwitchPrefab").gameObject;
+			CyclePrefab.SetActive(false);
+
 
 			var entryPrefabGO = transform.Find("LobbyList/ScrollArea/Content/EntryPrefab").gameObject;
 			entryPrefabGO.SetActive(false);
@@ -257,18 +273,18 @@ namespace ONI_MP.UI
 			HostSteamToggle.SetIsSelected(current == HostMode.Steam);
 
 			// Update transport
-			switch(current) 
+			switch (current)
 			{
 				case HostMode.Steam:
-                    NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
+					NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
 					break;
 				case HostMode.LAN:
-                    NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.RIPTIDE);
-                    break;
-				default:
-                    NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
+					NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.RIPTIDE);
 					break;
-            }
+				default:
+					NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
+					break;
+			}
 		}
 
 		private void SetJoinVia(JoinMode current)
@@ -283,19 +299,19 @@ namespace ONI_MP.UI
 			CodeTabToggle.SetIsSelected(current == JoinMode.Code);
 			LanTabToggle.SetIsSelected(current == JoinMode.LAN);
 
-			switch(current)
+			switch (current)
 			{
 				case JoinMode.Code:
 				case JoinMode.Steam:
-                    NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
+					NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
 					break;
 				case JoinMode.LAN:
-                    NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.RIPTIDE);
+					NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.RIPTIDE);
 					break;
 				default:
-                    NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
+					NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
 					break;
-            }
+			}
 		}
 
 		void IncreaseLobbySize()
@@ -311,7 +327,7 @@ namespace ONI_MP.UI
 
 				Configuration.Instance.Host.MaxLobbySize = lobbySize;
 				Configuration.Instance.Save();
-            }
+			}
 		}
 
 		void DecreaseLobbySize()
@@ -325,9 +341,9 @@ namespace ONI_MP.UI
 				LobbySize.SetTextFromData(lobbySize.ToString());
 				RefreshLobbySizeButtons();
 
-                Configuration.Instance.Host.MaxLobbySize = lobbySize;
-                Configuration.Instance.Save();
-            }
+				Configuration.Instance.Host.MaxLobbySize = lobbySize;
+				Configuration.Instance.Save();
+			}
 		}
 		void RefreshLobbySizeButtons()
 		{
@@ -415,21 +431,22 @@ namespace ONI_MP.UI
 
 		void JoinLanLobby()
 		{
-            using var _ = Profiler.Scope();
+			using var _ = Profiler.Scope();
 
-            string ipAdress = JoinIPInput.Text;
+			string ipAdress = JoinIPInput.Text;
 			string portText = JoinPortInput.Text;
 
-			if (int.TryParse(portText, out int port)) {
-                Configuration.Instance.Client.LanSettings.Ip = ipAdress;
-                Configuration.Instance.Client.LanSettings.Port = int.Parse(portText);
-                Configuration.Instance.Save();
+			if (int.TryParse(portText, out int port))
+			{
+				Configuration.Instance.Client.LanSettings.Ip = ipAdress;
+				Configuration.Instance.Client.LanSettings.Port = int.Parse(portText);
+				Configuration.Instance.Save();
 
-                Debug.Log("Trying to join LAN lobby with IP: " + ipAdress + " and Port: " + portText);
+				Debug.Log("Trying to join LAN lobby with IP: " + ipAdress + " and Port: " + portText);
 				GameClient.ConnectToHost(ip: ipAdress, port: port);
-            }
+			}
 
-        }
+		}
 
 		void JoinLobbyWithCode()
 		{
@@ -527,12 +544,19 @@ namespace ONI_MP.UI
 				ShowAdditionalHostSettingsSegment(false);
 			RefreshSpacer();
 		}
+		void ToggleAdditionalHostSettingsSegment()
+		{
+			using var _ = Profiler.Scope();
+			ShowAdditionalHostSettingsSegment(!ShowAdditionalHostSettings);
+		}
 		void ShowAdditionalHostSettingsSegment(bool show)
 		{
 			using var _ = Profiler.Scope();
 
 			ShowAdditionalHostSettings = show;
 			AdditionalHostSettingsSegment.SetActive(show);
+			if (show)
+				ShowLobbySettings();
 		}
 		void ShowLobbySegment(bool show)
 		{
@@ -621,6 +645,64 @@ namespace ONI_MP.UI
 			Lobbies[lobby] = entryUI;
 			return entryUI;
 		}
+
+		void ShowLobbySettings()
+		{
+			AddOrGetLobbySettingsEntry_Toggle("HardSyncToggle", ToggleHardSyncSetting,
+				STRINGS.UI.CONFIGURATION.TITLES.HOST_SETTINGS.SERVER_SETTINGS.HARD_SYNC_AT_CYCLE_START,
+				STRINGS.UI.CONFIGURATION.TOOLTIPS.HOST_SETTINGS.SERVER_SETTINGS.HARD_SYNC_AT_CYCLE_START)
+				.SetOnFromCode(Configuration.Instance.Host.Server.HardSyncAtCycleStart);
+		}
+		void ToggleHardSyncSetting(bool hardSyncEnabled)
+		{
+			var config = Configuration.Instance;
+			config.Host.Server.HardSyncAtCycleStart = hardSyncEnabled;
+			config.Save();
+		}
+
+		public FToggle AddOrGetLobbySettingsEntry_Toggle(string id, System.Action<bool> onToggleChange, string label, string tooltip = "")
+		{
+			if (!SettingsToggles.TryGetValue(id, out var optionToggle))
+			{
+				var toggle = Util.KInstantiateUI(TogglePrefab, SettingsContainer, true).gameObject.AddOrGet<FToggle>();
+
+				var settingLabel = toggle.transform.Find("Label").gameObject.AddOrGet<LocText>();
+				settingLabel.text = label;
+				if (tooltip.Any())
+					UIUtils.AddSimpleTooltipToObject(settingLabel.transform, tooltip, alignCenter: true, onBottom: true);
+
+				toggle.SetCheckmark("Background/Checkmark");
+				toggle.OnClick += onToggleChange;
+				optionToggle = SettingsToggles[id] = toggle;
+			}
+			optionToggle.gameObject.SetActive(true);
+			return optionToggle;
+		}
+		public FCycle AddOrGetLobbySettingsEntry_Cycle(string id, List<FCycle.Option> options, System.Action<FCycle.Option> onOptionSelect, string label, string tooltip = "")
+		{
+			if (!SettingsCycles.TryGetValue(id, out var optionCycle))
+			{
+				var cycle = Util.KInstantiateUI(CyclePrefab, SettingsContainer, true).AddOrGet<FCycle>();
+
+				cycle.SetDescriptionFormatter(desc => desc.Replace("\n\n", "\n"));
+				var settingLabel = cycle.transform.Find("Label").gameObject.AddOrGet<LocText>();
+				settingLabel.text = label;
+				if (tooltip.Any())
+					UIUtils.AddSimpleTooltipToObject(settingLabel.transform, tooltip, alignCenter: true, onBottom: true);
+
+				cycle.Initialize(
+					cycle.transform.Find("Left").gameObject.AddOrGet<FButton>(),
+					cycle.transform.Find("Right").gameObject.AddOrGet<FButton>(),
+					cycle.transform.Find("ChoiceLabel").gameObject.AddOrGet<LocText>(),
+					cycle.transform.Find("ChoiceLabel/Description").gameObject.AddOrGet<LocText>());
+
+				cycle.Options = options;
+				cycle.OnChange += onOptionSelect;
+				optionCycle = SettingsCycles[id] = cycle;
+			}
+			optionCycle.gameObject.SetActive(true);
+			return optionCycle;
+		}
 		void OnLobbyJoinClicked(LobbyListEntry lobby)
 		{
 			using var _ = Profiler.Scope();
@@ -689,50 +771,50 @@ namespace ONI_MP.UI
 
 			if (int.TryParse(portText, out int port))
 			{
-                Configuration.Instance.Host.LanSettings.Ip = ipAdress;
-                Configuration.Instance.Host.LanSettings.Port = port;
-                Configuration.Instance.Save();
+				Configuration.Instance.Host.LanSettings.Ip = ipAdress;
+				Configuration.Instance.Host.LanSettings.Port = port;
+				Configuration.Instance.Save();
 
-                string lobbySize = LobbySize.Text;
-                if (lobbySize.Any())
-                {
-                    if (!int.TryParse(lobbySize, out int maxLobbySize))
-                        maxLobbySize = NetworkConfig.LOBBY_SIZE_MIN;
-                    maxLobbySize = Mathf.Clamp(maxLobbySize, NetworkConfig.LOBBY_SIZE_MIN, NetworkConfig.LOBBY_SIZE_MAX);
-                    Configuration.Instance.Host.MaxLobbySize = maxLobbySize;
-                }
-                else
-                {
-                    Configuration.Instance.Host.MaxLobbySize = NetworkConfig.LOBBY_SIZE_DEFAULT;
-                }
+				string lobbySize = LobbySize.Text;
+				if (lobbySize.Any())
+				{
+					if (!int.TryParse(lobbySize, out int maxLobbySize))
+						maxLobbySize = NetworkConfig.LOBBY_SIZE_MIN;
+					maxLobbySize = Mathf.Clamp(maxLobbySize, NetworkConfig.LOBBY_SIZE_MIN, NetworkConfig.LOBBY_SIZE_MAX);
+					Configuration.Instance.Host.MaxLobbySize = maxLobbySize;
+				}
+				else
+				{
+					Configuration.Instance.Host.MaxLobbySize = NetworkConfig.LOBBY_SIZE_DEFAULT;
+				}
 
-                Debug.Log("Trying to start LAN lobby with IP: " + ipAdress + " and Port: " + portText);
+				Debug.Log("Trying to start LAN lobby with IP: " + ipAdress + " and Port: " + portText);
 
 				if (Utils.IsInGame())
 				{
 					NetworkConfig.StartServer();
-				} 
+				}
 				else
 				{
-                    MultiplayerSession.ShouldHostAfterLoad = true; // Set flag to start hosting after loading
+					MultiplayerSession.ShouldHostAfterLoad = true; // Set flag to start hosting after loading
 
-                    string saveForCurrentDlc = SaveLoader.GetLatestSaveForCurrentDLC();
-                    bool hasVersionCompatibleSave = !string.IsNullOrEmpty(saveForCurrentDlc) && System.IO.File.Exists(saveForCurrentDlc);
-                    if (hasVersionCompatibleSave)
-                    {
-                        DebugConsole.Log($"[UnityMultiplayerScreen/StartHostingGame] Found existing compatible savefile. Opening load sequence");
-                        MainMenu.Instance?.LoadGame();
-                        RegisterOnExitLoadScreenTriggers();
-                    }
-                    else
-                    {
-                        DebugConsole.Log("$[UnityMultiplayerScreen/StartHostingGame] No saves found! Running new game sequence.");
-                        MainMenu.Instance?.NewGame();
-                    }
-                }
-                Show(false);
-            }
-        }
+					string saveForCurrentDlc = SaveLoader.GetLatestSaveForCurrentDLC();
+					bool hasVersionCompatibleSave = !string.IsNullOrEmpty(saveForCurrentDlc) && System.IO.File.Exists(saveForCurrentDlc);
+					if (hasVersionCompatibleSave)
+					{
+						DebugConsole.Log($"[UnityMultiplayerScreen/StartHostingGame] Found existing compatible savefile. Opening load sequence");
+						MainMenu.Instance?.LoadGame();
+						RegisterOnExitLoadScreenTriggers();
+					}
+					else
+					{
+						DebugConsole.Log("$[UnityMultiplayerScreen/StartHostingGame] No saves found! Running new game sequence.");
+						MainMenu.Instance?.NewGame();
+					}
+				}
+				Show(false);
+			}
+		}
 
 		private void StartHostingSteamGame()
 		{
