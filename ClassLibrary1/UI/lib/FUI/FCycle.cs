@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UI.lib.UIcmp //Source: Aki
+namespace UI.lib.UIcmp //Source: Aki & Sgt_Imalas
 {
 	public class FCycle : KMonoBehaviour
 	{
-		public event System.Action OnChange;
+		public event System.Action<Option> OnChange;
 
 		[SerializeField]
 		public FButton leftArrow;
@@ -83,13 +83,32 @@ namespace UI.lib.UIcmp //Source: Aki
 		}
 		private bool HasOptions => Options.Count > 0;
 
-		public string Value
+		public void SetValueById(string id)
 		{
-			get => Options.Count >= currentIndex ? Options[currentIndex].id : default;
+			var index = Options.FindIndex(x => x.id == id);
+			if (currentIndex == index)
+			{
+				return;
+			}
+			if (index != -1)
+			{
+				currentIndex = index;
+			}
+			else
+			{
+				Debug.LogWarning($"Invalid option ID given \"{id}\"");
+				currentIndex = 0;
+			}
+			UpdateLabel();
+		}
+
+		public Option Value
+		{
+			get => Options.Count >= currentIndex ? Options[currentIndex] : default;
 
 			set
 			{
-				var index = Options.FindIndex(x => x.id == value);
+				var index = Options.FindIndex(x => x == value);
 
 				if (currentIndex == index)
 				{
@@ -102,7 +121,7 @@ namespace UI.lib.UIcmp //Source: Aki
 				}
 				else
 				{
-					DebugConsole.LogWarning($"Invalid option ID given \"{value}\"");
+					Debug.LogWarning($"Invalid option ID given \"{value}\"");
 					currentIndex = 0;
 				}
 
@@ -116,7 +135,7 @@ namespace UI.lib.UIcmp //Source: Aki
 			{
 				currentIndex = (currentIndex + Options.Count - 1) % Options.Count;
 				UpdateLabel();
-				OnChange?.Invoke();
+				OnChange?.Invoke(Value);
 			}
 		}
 
@@ -126,7 +145,7 @@ namespace UI.lib.UIcmp //Source: Aki
 			{
 				currentIndex = (currentIndex + 1) % Options.Count;
 				UpdateLabel();
-				OnChange?.Invoke();
+				OnChange?.Invoke(Value);
 			}
 		}
 
@@ -134,10 +153,10 @@ namespace UI.lib.UIcmp //Source: Aki
 		{
 			if (Options.Count >= currentIndex)
 			{
-				Value = Options[currentIndex].id;
+				Value = Options[currentIndex];
 
 				string title = Options[currentIndex].title;
-				if(NameFormatter != null)
+				if (NameFormatter != null)
 				{
 					title = NameFormatter(title);
 				}
@@ -146,7 +165,7 @@ namespace UI.lib.UIcmp //Source: Aki
 				if (description != null)
 				{
 					string desc = Options[currentIndex].description;
-					if(DescriptionFormatter != null)
+					if (DescriptionFormatter != null)
 					{
 						desc = DescriptionFormatter(desc);
 					}
@@ -163,6 +182,6 @@ namespace UI.lib.UIcmp //Source: Aki
 		{
 			NameFormatter = formatName;
 		}
-		
+
 	}
 }
