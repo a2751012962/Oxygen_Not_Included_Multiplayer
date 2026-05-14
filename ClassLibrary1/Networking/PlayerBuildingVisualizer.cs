@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using static ONI_MP.STRINGS.UI.MP_CHATWINDOW;
 namespace ONI_MP.Networking
 {
 	/// <summary>
@@ -93,7 +94,7 @@ namespace ONI_MP.Networking
 			{
 				if (!_tileInfos.TryGetValue(def, out var renderInfo))
 				{
-					renderInfo = _tileInfos[def] = new BlockTileRenderer.RenderInfo(World.Instance.blockTileRenderer, (int)def.TileLayer, LayerMask.NameToLayer("Overlay"), def, SimHashes.Void);
+					renderInfo = _tileInfos[def] = new BlockTileRenderer.RenderInfo(World.Instance.blockTileRenderer, (int)def.TileLayer, LayerMask.NameToLayer("Place"), def, SimHashes.Void);
 				}
 				var tex = renderInfo.material.mainTexture as Texture2D;
 				var uv = renderInfo.atlasInfo.First().uvBox;
@@ -155,14 +156,19 @@ namespace ONI_MP.Networking
 		{
 			int posCell = Grid.PosToCell(targetPos);
 			Vector3 pos = Grid.CellToPosCBC(posCell, CurrentDef.SceneLayer);
-			_visualizer = GameUtil.KInstantiate(CurrentDef.BuildingPreview, pos, Grid.SceneLayer.Front, "OtherPlayerBuildingVisualizer", LayerMask.NameToLayer("Place"));
+			//_visualizer = GameUtil.KInstantiate(CurrentDef.BuildingPreview, pos, Grid.SceneLayer.FXFront, "OtherPlayerBuildingVisualizer", LayerMask.NameToLayer("Place"));
+
+			_visualizer = new GameObject();
+			_visualizer.SetActive(false);
+			var anim = _visualizer.AddComponent<KBatchedAnimController>();
+			anim.isMovable = true;
+			anim.sceneLayer = Grid.SceneLayer.FXFront;
+			anim.AnimFiles = CurrentDef.AnimFiles;
+			anim.defaultAnim = "place";
 			_visualizer.transform.SetPosition(pos);
 			_visualizer.SetActive(true);
-
-			if (_visualizer.TryGetComponent<Rotatable>(out var rotatable))
-			{
-				rotatable.SetOrientation(CurrentOrientation);
-			}
+			SetSize(CurrentDef.WidthInCells, CurrentDef.HeightInCells);
+			UpdateRotation();
 			if (_visualizer.TryGetComponent<KBatchedAnimController>(out var kbac))
 			{
 				kbac.visibilityType = KAnimControllerBase.VisibilityType.Always;
@@ -237,18 +243,95 @@ namespace ONI_MP.Networking
 
 		private void UpdateBuildingVisual(int cell)
 		{
-			_visualizer.transform.SetPosition(Grid.CellToPosCBC(cell, CurrentDef.SceneLayer));
-			if (_visualizer.TryGetComponent<Rotatable>(out var rotatable))
-			{
-				rotatable.SetOrientation(CurrentOrientation);
-			}
-
+			var pos = Grid.CellToPosCBC(cell, CurrentDef.SceneLayer);
+			//if (CurrentDef.WidthInCells % 2 == 0)
+			//	pos.x += 0.5f;
+			_visualizer.transform.SetPosition(pos);
+			UpdateRotation();
 			if (_visualizer.TryGetComponent<KBatchedAnimController>(out var kbac))
 			{
 				UpdateVisualColor(cell);
 				kbac.TintColour = currentColor;
 			}
 		}
+
+		private void UpdateRotation()
+		{
+			if (_visualizer.TryGetComponent<KBatchedAnimController>(out var kbac))
+			{
+				kbac.Pivot = this.GetVisualizerPivot();
+				kbac.Rotation = this.GetVisualizerRotation();
+				kbac.Offset = this.GetVisualizerOffset();
+				kbac.FlipX = this.GetVisualizerFlipX();
+				kbac.FlipY = this.GetVisualizerFlipY();
+			}
+		}
+		#region rotatableClone
+
+		int width, height;
+		private Vector3 pivot = Vector3.zero;
+		private Vector3 visualizerOffset = Vector3.zero;
+
+		public bool GetVisualizerFlipX() => this.CurrentOrientation == Orientation.FlipH;
+
+		public bool GetVisualizerFlipY() => this.CurrentOrientation == Orientation.FlipV;
+		public float GetVisualizerRotation()
+		{
+			switch (CurrentDef.PermittedRotations)
+			{
+				case PermittedRotations.R90:
+				case PermittedRotations.R360:
+					return -90f * (float)this.CurrentOrientation;
+				default:
+					return 0.0f;
+			}
+		}
+		public Vector3 GetVisualizerPivot()
+		{
+			Vector3 pivot = this.pivot;
+			switch (this.CurrentOrientation)
+			{
+				case Orientation.FlipH:
+					pivot.x = -this.pivot.x;
+					break;
+			}
+			return pivot;
+		}
+		private Vector3 GetVisualizerOffset()
+		{
+			Vector3 visualizerOffset;
+			switch (this.CurrentOrientation)
+			{
+				case Orientation.FlipH:
+					visualizerOffset = new Vector3(-this.visualizerOffset.x, this.visualizerOffset.y, this.visualizerOffset.z);
+					break;
+				case Orientation.FlipV:
+					visualizerOffset = new Vector3(this.visualizerOffset.x, 1f, this.visualizerOffset.z);
+					break;
+				default:
+					visualizerOffset = this.visualizerOffset;
+					break;
+			}
+			return visualizerOffset;
+		}
+
+		public void SetSize(int width, int height)
+		{
+			this.width = width;
+			this.height = height;
+			if (width % 2 == 0)
+			{
+				this.pivot = new Vector3(-0.5f, 0.5f, 0.0f);
+				this.visualizerOffset = new Vector3(0.5f, 0.0f, 0.0f);
+			}
+			else
+			{
+				this.pivot = new Vector3(0.0f, 0.5f, 0.0f);
+				this.visualizerOffset = Vector3.zero;
+			}
+		}
+
+		#endregion
 
 		private void RemoveTileVisual()
 		{
