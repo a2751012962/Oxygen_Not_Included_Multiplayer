@@ -6,6 +6,7 @@ using System.Linq;
 using Shared.Profiling;
 using UnityEngine;
 using ONI_MP.Networking.Components;
+using Rendering;
 
 namespace ONI_MP.Networking.Packets.Tools.Build
 {
@@ -104,10 +105,24 @@ namespace ONI_MP.Networking.Packets.Tools.Build
                 tags.Add(SimHashes.SandStone.CreateTag());
             }
 
-            int layerIndex = (int)ObjectLayer;
 
+			bool isBridge = def.BuildingComplete.GetComponent<ConduitBridgeBase>() || def.BuildingComplete.GetComponent<WireUtilityNetworkLink>() || def.BuildingComplete.GetComponent<LogicUtilityNetworkLink>() || PrefabID == ContactConductivePipeBridgeConfig.ID;
+			int layerIndex = (int)ObjectLayer;
             // Destroy ghost/constructable if it still exists
             GameObject existing = Grid.Objects[Cell, layerIndex];
+
+            if(existing == null && isBridge)
+            {
+                bool vertical = Orientation == Orientation.R90 || Orientation == Orientation.R270;
+                
+                int firstToCheck = vertical ? Grid.CellAbove(Cell) : Grid.CellLeft(Cell);
+                int secondToCheck = vertical ? Grid.CellBelow(Cell) : Grid.CellRight(Cell);
+
+				existing = Grid.Objects[firstToCheck, layerIndex];
+                if(existing == null)
+					existing = Grid.Objects[secondToCheck, layerIndex];
+			}
+
             if (existing != null)
             {
                 if (existing.TryGetComponent<Constructable>(out Constructable con)) {
