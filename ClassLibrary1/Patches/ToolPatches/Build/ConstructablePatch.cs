@@ -41,8 +41,6 @@ public static class ConstructablePatch
 			utilityConnectionFlags = tileVis.Connections;
 		}
 
-        BuildingUtils.GetLayerInfo(building, out var objectLayer, out var isReplacement);
-
 		/*
         IHaveUtilityNetworkMgr mgr = def.BuildingComplete.GetComponent<IHaveUtilityNetworkMgr>();
         if (mgr != null)
@@ -64,8 +62,7 @@ public static class ConstructablePatch
 			Temperature = temp,
 			FacadeID = facade,
 			UtilityConnectionFlags = utilityConnectionFlags,
-			ObjectLayer = objectLayer,
-			IsReplacement = isReplacement,
+			ObjectLayer = def.ObjectLayer,
 			WorkerNetId = workerId
 		};
 

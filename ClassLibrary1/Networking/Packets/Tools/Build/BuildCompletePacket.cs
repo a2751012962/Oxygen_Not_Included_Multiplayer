@@ -26,7 +26,6 @@ namespace ONI_MP.Networking.Packets.Tools.Build
         public UtilityConnections UtilityConnectionFlags;
 
         public ObjectLayer ObjectLayer;
-        public bool IsReplacement;
 
         public void Serialize(BinaryWriter writer)
         {
@@ -46,7 +45,6 @@ namespace ONI_MP.Networking.Packets.Tools.Build
             writer.Write((int)UtilityConnectionFlags);
 
             writer.Write((int)ObjectLayer);
-            writer.Write(IsReplacement);
 
             writer.Write(WorkerNetId);
         }
@@ -75,7 +73,6 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 
             UtilityConnectionFlags = (UtilityConnections)reader.ReadInt32();
             ObjectLayer = (ObjectLayer)reader.ReadInt32();
-            IsReplacement = reader.ReadBoolean();
 
             WorkerNetId = reader.ReadInt32();
         }
@@ -125,16 +122,22 @@ namespace ONI_MP.Networking.Packets.Tools.Build
 
             if (existing != null)
             {
-                if (existing.TryGetComponent<Constructable>(out Constructable con)) {
-                    if(NetworkIdentityRegistry.TryGet(WorkerNetId, out var identity) &&
-                       identity.TryGetComponent<WorkerBase>(out var worker))
-                    {
-                        con.initialTemperature = Temperature;
-                        con.SelectedElementsTags = tags;
-                        con.FinishConstruction(UtilityConnectionFlags, worker);
-                    }
-                } else
+                //if (existing.TryGetComponent<Constructable>(out Constructable con))
+                //{
+                //    if (NetworkIdentityRegistry.TryGet(WorkerNetId, out var identity) &&
+                //       identity.TryGetComponent<WorkerBase>(out var worker))
+                //    {
+                //        con.initialTemperature = Temperature;
+                //        con.SelectedElementsTags = tags;
+                //        con.FinishConstruction(UtilityConnectionFlags, worker);
+                //    }
+                //}
+                //else
                 {
+                    // Clean up dangling visualizers
+                    Object.Destroy(existing);
+                    Grid.Objects[Cell, layerIndex] = null;
+
                     var builtObj = def.Build(
                         Cell,
                         Orientation,
