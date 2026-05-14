@@ -366,7 +366,7 @@ namespace ONI_MP.Networking
 
 		public void UpdateVisualColor(int cell)
 		{
-			if (BuildingUtils.ValidCell(_visualizer, CurrentDef, cell, CurrentOrientation))
+			if (BuildingUtils.ValidCell(CurrentDef.BuildingPreview, CurrentDef, cell, CurrentOrientation))
 			{
 				currentColor = visualColor;
 			}
