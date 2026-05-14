@@ -57,7 +57,7 @@ namespace ONI_MP
 
                         public class SERVER_SETTINGS
                         {
-                            public static LocString HARD_SYNC_AT_CYCLE_START = "Perform a hard sync at the start of every new cycle\n\nDoes not use up you're one hard sync per cycle";
+                            public static LocString HARD_SYNC_AT_CYCLE_START = "Perform a hard sync at the start of every new cycle\n\nDoes not use up your one hard sync per cycle";
                         }
                     }
 
