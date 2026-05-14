@@ -107,12 +107,6 @@ namespace ONI_MP.Networking.Components.StructureStateSyncers
         {
             if (!Grid.IsValidCell(packet.Cell)) return;
 
-            var allSyncers = GetComponents<StructureSyncerBase>();
-            if (allSyncers.Length > 1)
-                DebugConsole.Log($"[{packet.Cell}] Found {allSyncers.Length} syncers: " +
-                                 string.Join(", ", allSyncers.Select(s => s.GetType().Name)));
-
-            DebugConsole.Log("Applying State for " + GetType().Name);
             ApplyState(packet);
             ApplyOperationalState(packet);
         }

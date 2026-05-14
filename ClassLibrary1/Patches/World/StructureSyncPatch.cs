@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 using HarmonyLib;
 using ONI_MP.DebugTools;
 using ONI_MP.Networking;
@@ -35,16 +38,25 @@ namespace ONI_MP.Patches.World
         }
     }
 
+
+    [HarmonyPatch]
     public static class StorageBuildingPatches
     {
-        [HarmonyPatch(typeof(StorageLocker), nameof(StorageLocker.OnSpawn))]
-        public static class StorageLocker_OnSpawn_Patch
+        [HarmonyPostfix]
+        public static void Postfix(object __instance)
         {
-            public static void Postfix(StorageLocker __instance)
-            {
-                using var _ = Profiler.Scope();
-                StorageStateSyncer syncer = __instance.gameObject.AddOrGet<StorageStateSyncer>();
-            }
+            using var _ = Profiler.Scope();
+            StorageStateSyncer syncer = ((KMonoBehaviour) __instance).gameObject.AddOrGet<StorageStateSyncer>();
+        }
+
+        [HarmonyTargetMethods]
+        internal static IEnumerable<MethodBase> TargetMethods()
+        {
+            const string name = nameof(KMonoBehaviour.OnSpawn);
+            yield return AccessTools.Method(typeof(StorageLocker), name);
+            yield return AccessTools.Method(typeof(RationBox), name);
+            yield return AccessTools.Method(typeof(CargoBay), name);
+            yield return AccessTools.Method(typeof(CargoBayCluster), name);
         }
     }
 

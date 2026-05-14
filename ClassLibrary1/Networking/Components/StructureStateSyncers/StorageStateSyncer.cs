@@ -61,6 +61,7 @@ namespace ONI_MP.Networking.Components.StructureStateSyncers
             return false;
         }
 
+        // TODO: Does not scale well in the late game
         private float GetMaxStorageTemperature(Storage storage)
         {
             float max = 0f;
@@ -70,6 +71,7 @@ namespace ONI_MP.Networking.Components.StructureStateSyncers
                 if (pe != null && pe.Temperature > max)
                     max = pe.Temperature;
             }
+
             return max;
         }
     }
