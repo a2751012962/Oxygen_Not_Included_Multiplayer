@@ -111,7 +111,7 @@ namespace ONI_MP.Networking.Packets.Tools.Build
             if(existing == null && isBridge)
             {
                 bool vertical = Orientation == Orientation.R90 || Orientation == Orientation.R270;
-                
+                //todo: account for other width bridges; get the offsets from bridge width instead
                 int firstToCheck = vertical ? Grid.CellAbove(Cell) : Grid.CellLeft(Cell);
                 int secondToCheck = vertical ? Grid.CellBelow(Cell) : Grid.CellRight(Cell);
 
