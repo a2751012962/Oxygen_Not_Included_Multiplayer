@@ -15,7 +15,10 @@ namespace ONI_MP
 					public static LocString B_CLIENT_SETTINGS = "Client Settings";
 					public static LocString C_CURSOR_SETTINGS = "Cursor Settings";
 					public static LocString D_MISC_SETTINGS = "Misc Settings";
-				}
+
+					// Additional lobby options header
+                    public static LocString SERVER_SETTINGS = "Server Settings";
+                }
 
                 public class TITLES
                 {

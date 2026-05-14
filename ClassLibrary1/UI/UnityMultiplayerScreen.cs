@@ -23,6 +23,8 @@ using static ONI_MP.STRINGS.UI.MP_SCREEN.HOSTMENU.LOBBYSIZE;
 using static ONI_MP.STRINGS.UI.PAUSESCREEN;
 using static ONI_MP.UI.UnityMultiplayerScreen;
 using ONI_MP.Patches.ToolPatches;
+using PeterHan.PLib.Options;
+using ONI_MP.Menus;
 
 namespace ONI_MP.UI
 {
@@ -218,8 +220,9 @@ namespace ONI_MP.UI
 			PasswortInput.Text = string.Empty;
 
 			AdditionalLobbySettings = transform.Find("HostMenu/AdditionalSettings").gameObject.AddOrGet<FButton>();
-			AdditionalLobbySettings.SetInteractable(false);
-			UIUtils.AddSimpleTooltipToObject(AdditionalLobbySettings.gameObject, WORK_IN_PROGRESS);
+			AdditionalLobbySettings.SetInteractable(true);
+			AdditionalLobbySettings.OnClick += () => ServerSettingsDialog.Show();
+			//UIUtils.AddSimpleTooltipToObject(AdditionalLobbySettings.gameObject, WORK_IN_PROGRESS);
 
 			StartHosting = transform.Find("HostMenu/Buttons/StartHosting").gameObject.AddOrGet<FButton>();
 			StartHosting.OnClick += () => StartHostingGame();
