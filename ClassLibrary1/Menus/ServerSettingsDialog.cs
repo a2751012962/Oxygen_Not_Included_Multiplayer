@@ -5,6 +5,10 @@ using ONI_MP.DebugTools;
 
 namespace ONI_MP.Menus
 {
+    /// <summary>
+    /// Unused, left here as a template for any fugure PLib popups we could need - Luke
+    /// Replaced by UnityMultiplayerScreen.ShowLobbySettings
+    /// </summary>
     internal static class ServerSettingsDialog
     {
         public static void Show()
