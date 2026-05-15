@@ -38,7 +38,7 @@ namespace ONI_MP.Networking.Components
 			using var _ = Profiler.Scope();
 			if (!MultiplayerSession.IsHostInSession) return;
 			if (identity == null || consumer == null || selectable == null) return;
-			if (!SubscribedNetIds.Contains(identity.NetId)) return;
+			//if (!SubscribedNetIds.Contains(identity.NetId)) return;
 
 			timeSinceLastBroadcast += dt;
 			bool immediate = PendingImmediate.Remove(identity.NetId);
