@@ -17,8 +17,18 @@ namespace ONI_MP.Patches.GamePatches
 		private static float _lastSentTime = 0f;
 		private static int _lastCycle = -1;
 
+		[HarmonyPatch(nameof(GameClock.OnSpawn))]
+		[HarmonyPostfix]
+		public static void OnSpawn_Postfix(GameClock __instance)
+		{
+			// Initialize as what the game starts at.
+			// Stops a hard sync triggering if you keep the game paused before they join
+			_lastSentTime = __instance.GetTime();
+			_lastCycle = __instance.GetCycle();
+        }
+
 		// Prevent clients from running AddTime
-		[HarmonyPatch("AddTime")]
+		[HarmonyPatch(nameof(GameClock.AddTime))]
 		[HarmonyPrefix]
 		public static bool AddTime_Prefix()
 		{
@@ -42,7 +52,7 @@ namespace ONI_MP.Patches.GamePatches
 		}
 
 		// Host logic: send WorldCyclePacket every 1s and trigger HardSync at cycle start
-		[HarmonyPatch("AddTime")]
+		[HarmonyPatch(nameof(GameClock.AddTime))]
 		[HarmonyPostfix]
 		public static void AddTime_Postfix(GameClock __instance)
 		{
