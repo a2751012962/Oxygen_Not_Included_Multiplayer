@@ -308,8 +308,6 @@ namespace ONI_MP.Misc
             filter.RefreshUI();
         }
 
-        // TODO: Test these ones
-
         public static void TryRefreshTimeRangeSideScreen(TimeRangeSideScreen screen, GameObject go)
         {
             if (!go.TryGetComponent(out LogicTimeOfDaySensor sensor)) return;
