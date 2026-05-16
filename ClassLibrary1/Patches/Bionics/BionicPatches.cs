@@ -91,5 +91,19 @@ namespace ONI_MP.Patches.Bionics
                 return true; // allow SM start
             }
         }
+
+        [HarmonyPatch(typeof(BionicOilMonitor.Instance), nameof(BionicOilMonitor.Instance.GetEffect))]
+        public static class BionicOilMonitor_Instance_GetEffect_Patch
+        {
+            static bool Prefix(BionicOilMonitor.Instance __instance, ref string __result)
+            {
+                if (__instance?.resume == null)
+                {
+                    __result = "NoLubricationMajor";
+                    return false;
+                }
+                return true;
+            }
+        }
     }
 }

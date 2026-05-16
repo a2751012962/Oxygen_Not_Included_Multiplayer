@@ -57,6 +57,7 @@ namespace ONI_MP.Patches.World
             yield return AccessTools.Method(typeof(RationBox), name);
             yield return AccessTools.Method(typeof(CargoBay), name);
             yield return AccessTools.Method(typeof(CargoBayCluster), name);
+            //yield return AccessTools.Method(typeof(LiquidReservoir), name); // LiquidReservoir needs its actual class setting here
         }
     }
 
