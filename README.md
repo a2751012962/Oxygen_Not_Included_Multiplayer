@@ -53,7 +53,7 @@ To get started with building the mod, follow these steps:
 2. **Clone the repository**
 
    ```
-   git clone https://github.com/Lyraedan/Oxygen_Not_Included_Multiplayer.git
+   git clone https://github.com/Lyraedan/Oxygen_Not_Included_Together.git
    ```
 
 3. **Open the solution**  
