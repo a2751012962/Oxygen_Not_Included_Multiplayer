@@ -14,7 +14,7 @@ namespace ONI_Together.Patches.World
 	// 1.5 s ConduitFlowSyncer sweep — this patch only handles the one
 	// frame the user actually watches, where a 1.5 s lag is most visible.
 	//
-	// Per-cell rate limit, end-of-frame coalescing and shadow update all
+	// Per-cell_idx rate limit, end-of-frame coalescing and shadow update all
 	// live inside ConduitFlowSyncer.EnqueueImmediate so this patch stays
 	// trivially small and defensive.
 	internal static class ConduitFlowFastPathPatch
@@ -23,10 +23,10 @@ namespace ONI_Together.Patches.World
 		public static class ConduitFlow_AddElement_FastPath
 		{
 			// Capture pre-add mass so the Postfix can detect a 0 -> >0
-			// transition. AddElement *adds* to the cell, so reading the
+			// transition. AddElement *adds* to the cell_idx, so reading the
 			// after-state alone only tells us "now > 0", not whether the
-			// cell was empty before this call.
-			public static void Prefix(ConduitFlow __instance, int cell, out float __state)
+			// cell_idx was empty before this call.
+			public static void Prefix(ConduitFlow __instance, int cell_idx, out float __state)
 			{
 				__state = -1f;
 				try
@@ -34,7 +34,7 @@ namespace ONI_Together.Patches.World
 					using var _ = Profiler.Scope();
 					if (!MultiplayerSession.IsHost) return;
 					if (Game.Instance == null) return;
-					__state = __instance.GetContents(cell).mass;
+					__state = __instance.GetContents(cell_idx).mass;
 				}
 				catch
 				{
@@ -44,7 +44,7 @@ namespace ONI_Together.Patches.World
 				}
 			}
 
-			public static void Postfix(ConduitFlow __instance, int cell, float __state)
+			public static void Postfix(ConduitFlow __instance, int cell_idx, float __state)
 			{
 				try
 				{
@@ -52,7 +52,7 @@ namespace ONI_Together.Patches.World
 					if (!MultiplayerSession.IsHost) return;
 					if (Game.Instance == null) return;
 					if (__state > 0.001f) return;          // wasn't empty before — steady-state, sweep handles
-					var after = __instance.GetContents(cell);
+					var after = __instance.GetContents(cell_idx);
 					if (after.mass <= 0f) return;          // defensive: AddElement(0,...) or rejected by sim
 
 					byte conduitType;
@@ -63,7 +63,7 @@ namespace ONI_Together.Patches.World
 					else
 						return;                            // solid rails or unknown ConduitFlow — out of scope
 
-					ConduitFlowSyncer.Instance?.EnqueueImmediate(cell, conduitType, after);
+					ConduitFlowSyncer.Instance?.EnqueueImmediate(cell_idx, conduitType, after);
 				}
 				catch (Exception ex)
 				{
