@@ -40,7 +40,7 @@ namespace ONI_Together.Networking
 
 			SetState(ServerState.Starting);
 
-			MultiplayerSession.IsHost = true;
+			MultiplayerSession.SetIsHost(true);
 			NetworkConfig.TransportServer.Start();
 
 			DebugConsole.Log("[GameServer] Game Server started!");
@@ -60,11 +60,11 @@ namespace ONI_Together.Networking
 
             NetworkConfig.TransportServer.CloseConnections();
 			NetworkConfig.TransportServer.Stop();
-            MultiplayerSession.IsHost = false;
+			MultiplayerSession.SetIsHost(false);
 
-            //MultiplayerSession.InSession = false;
+			//MultiplayerSession.InSession = false;
 
-            DebugConsole.Log("[GameServer] Shutdown complete.");
+			DebugConsole.Log("[GameServer] Shutdown complete.");
 		}
 
 		public static void Update()

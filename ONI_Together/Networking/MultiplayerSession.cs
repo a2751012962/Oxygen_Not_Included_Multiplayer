@@ -19,6 +19,9 @@ namespace ONI_Together.Networking
 
 		public static ulong LocalUserID => NetworkConfig.GetLocalID();
 
+		[System.Obsolete] //Keep for api compatibility
+		public static ulong LocalSteamID => LocalUserID;
+
 		public static ulong HostUserID { get; set; } = Utils.NilUlong();
 
 		public static string ServerIp { get; set; } = "127.0.0.1";
