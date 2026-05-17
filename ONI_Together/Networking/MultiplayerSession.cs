@@ -28,7 +28,9 @@ namespace ONI_Together.Networking
 		public static bool SessionHasPlayers => InSession && ConnectedPlayers.Count > 1;
 		public static bool NotInSession => !InSession;
 
-		public static bool IsHost = false; //HostUserID == LocalUserID;
+		public static bool IsHost => _isHost; //HostUserID == LocalUserID;
+		private static bool _isHost = false;
+		public static void SetIsHost(bool isHost) => _isHost = isHost;
 
 		public static bool IsClient => InSession && !IsHost;
 
