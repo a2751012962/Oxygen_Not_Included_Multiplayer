@@ -40,6 +40,13 @@ namespace ONI_Together.Networking.Components
 		private const float MASS_THRESHOLD = 0.01f;      // 10 g
 		private const float TEMP_THRESHOLD = 0.5f;       // 0.5 K
 
+		// Per-cell rate limit for the event-driven "empty→non-empty" fast path.
+		// Matches SYNC_INTERVAL: if a cell already fired immediately within the
+		// last interval, the next sweep tick is already scheduled and would
+		// re-broadcast the same state anyway. Defers to invariant #2's "min
+		// interval floor" requirement.
+		private const float IMMEDIATE_RATE_LIMIT = 1.5f;
+
 		private float _lastSyncTime;
 		private float _lastForceRefresh;
 		private bool _initialized;
@@ -54,6 +61,14 @@ namespace ONI_Together.Networking.Components
 		private int[] _shadowLiquidElement;
 		private float[] _shadowLiquidMass;
 		private float[] _shadowLiquidTemp;
+
+		// Fast-path state: per-cell time of last immediate emit (regardless of
+		// conduit type since gas/liquid pipes never coexist in the same cell),
+		// and an accumulator that LateUpdate flushes once per frame to coalesce
+		// bursts (e.g. a reservoir dumping into many cells in a single Sim200ms
+		// tick) into a single Reliable packet.
+		private float[] _lastImmediateEmit;
+		private readonly List<ConduitCellUpdate> _pendingImmediate = new List<ConduitCellUpdate>(64);
 
 		// Reusable scratch HashSet so the per-cell visibility check does not
 		// allocate. GetClientsViewingCell clears it for us.
@@ -129,6 +144,7 @@ namespace ONI_Together.Networking.Components
 				_shadowLiquidElement = new int[Grid.CellCount];
 				_shadowLiquidMass = new float[Grid.CellCount];
 				_shadowLiquidTemp = new float[Grid.CellCount];
+				_lastImmediateEmit = new float[Grid.CellCount];
 				PrimeShadow(gasFlow, (int)ObjectLayer.GasConduit, _shadowGasElement, _shadowGasMass, _shadowGasTemp);
 				PrimeShadow(liquidFlow, (int)ObjectLayer.LiquidConduit, _shadowLiquidElement, _shadowLiquidMass, _shadowLiquidTemp);
 				_lastForceRefresh = Time.unscaledTime;
@@ -245,6 +261,8 @@ namespace ONI_Together.Networking.Components
 		}
 
 		// Client-side apply. Called from ConduitContentsPacket.OnDispatched.
+		// Uses the publicised ConduitFlow.SetContents for a direct overwrite —
+		// no Remove + Add side effects, no in-flight delta loss.
 		public void OnContentsReceived(ConduitContentsPacket packet)
 		{
 			using var _ = Profiler.Scope();
@@ -267,21 +285,108 @@ namespace ONI_Together.Networking.Components
 						: (int)ObjectLayer.LiquidConduit;
 					if (Grid.Objects[u.Cell, layer] == null) continue; // pipe not built yet on client
 
-					// Replace via public Remove + Add. SetContents is not public;
-					// reflection on the SoA contents array is fragile across game
-					// patches, so go through the supported path. This drops any
-					// in-flight delta between snapshot and apply, which the next
-					// 1.5 s tick reconciles.
-					flow.RemoveElement(u.Cell, float.MaxValue);
-					if (u.Mass > 0f && u.Element != 0)
-					{
-						flow.AddElement(u.Cell, (SimHashes)u.Element, u.Mass, u.Temperature, u.DiseaseIdx, u.DiseaseCount);
-					}
+					flow.SetContents(u.Cell, new ConduitFlow.ConduitContents(
+						(SimHashes)u.Element,
+						u.Mass,
+						u.Temperature,
+						u.DiseaseIdx,
+						u.DiseaseCount));
 				}
 				catch (Exception ex)
 				{
 					DebugConsole.LogError($"[ConduitFlowSyncer] apply failed for cell {u.Cell}: {ex}");
 				}
+			}
+		}
+
+		// Event-driven fast path: called from the AddElement Harmony Postfix
+		// when a cell transitions empty → non-empty on the host. Per-cell rate
+		// limit + end-of-frame coalescing keep steady-state flow on the sweep
+		// (invariant #2 floor) while letting valve-open and pipe-connect
+		// moments land within one Steam P2P RTT.
+		public void EnqueueImmediate(int cell, byte conduitType, ConduitFlow.ConduitContents c)
+		{
+			try
+			{
+				if (!MultiplayerSession.IsHost) return;
+				if (MultiplayerSession.ConnectedPlayers.Count == 0) return;
+				if (!_initialized || Time.unscaledTime - _initializationTime < INITIAL_DELAY) return;
+				if (_lastImmediateEmit == null) return; // sweep hasn't lazy-init'd yet
+				if (!Grid.IsValidCell(cell)) return;
+
+				float now = Time.unscaledTime;
+				if (now - _lastImmediateEmit[cell] < IMMEDIATE_RATE_LIMIT) return;
+				_lastImmediateEmit[cell] = now;
+
+				// Keep the sweep's shadow in lockstep so the next 1.5 s tick
+				// doesn't re-broadcast the same state.
+				int el = (int)c.element;
+				if (conduitType == ConduitContentsPacket.CONDUIT_GAS)
+				{
+					_shadowGasElement[cell] = el;
+					_shadowGasMass[cell] = c.mass;
+					_shadowGasTemp[cell] = c.temperature;
+				}
+				else
+				{
+					_shadowLiquidElement[cell] = el;
+					_shadowLiquidMass[cell] = c.mass;
+					_shadowLiquidTemp[cell] = c.temperature;
+				}
+
+				_pendingImmediate.Add(new ConduitCellUpdate
+				{
+					Cell = cell,
+					ConduitType = conduitType,
+					Element = el,
+					Mass = c.mass,
+					Temperature = c.temperature,
+					DiseaseIdx = c.diseaseIdx,
+					DiseaseCount = c.diseaseCount,
+				});
+			}
+			catch (Exception ex)
+			{
+				DebugConsole.LogError($"[ConduitFlowSyncer] EnqueueImmediate failed for cell {cell}: {ex}");
+			}
+		}
+
+		// End-of-frame flush: coalesces every empty→non-empty event accumulated
+		// this frame into a single Reliable packet. Avoids fan-out under bursts
+		// (e.g. a reservoir dumping into 50+ cells in one Sim200ms tick).
+		private void LateUpdate()
+		{
+			if (_pendingImmediate.Count == 0) return;
+			if (!MultiplayerSession.IsHost) return;
+
+			try
+			{
+				if (_pendingImmediate.Count <= MAX_UPDATES_PER_PACKET)
+				{
+					var packet = new ConduitContentsPacket();
+					packet.Updates.AddRange(_pendingImmediate);
+					PacketSender.SendToAllClients(packet, PacketSendMode.Reliable);
+				}
+				else
+				{
+					// Honour the MTU cap even on bursts. Split into multiple
+					// Reliable packets rather than one oversize fragmented one.
+					for (int i = 0; i < _pendingImmediate.Count; i += MAX_UPDATES_PER_PACKET)
+					{
+						var packet = new ConduitContentsPacket();
+						int end = System.Math.Min(i + MAX_UPDATES_PER_PACKET, _pendingImmediate.Count);
+						for (int j = i; j < end; j++) packet.Updates.Add(_pendingImmediate[j]);
+						PacketSender.SendToAllClients(packet, PacketSendMode.Reliable);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				DebugConsole.LogError($"[ConduitFlowSyncer] LateUpdate flush failed: {ex}");
+			}
+			finally
+			{
+				_pendingImmediate.Clear();
 			}
 		}
 	}
