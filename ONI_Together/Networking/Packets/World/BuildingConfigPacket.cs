@@ -154,8 +154,8 @@ namespace ONI_Together.Networking.Packets.World
             {
                 if (go.TryGetComponent<KSelectable>(out var selectable) && SelectTool.Instance.selected == selectable)
                 {
-                    SelectTool.Instance.Select(null);
-                    SelectTool.Instance.Select(selectable);
+                    SelectTool.Instance.Select(null, true);
+                    SelectTool.Instance.Select(selectable, true);
                 }
             }
             catch (System.Exception e)
