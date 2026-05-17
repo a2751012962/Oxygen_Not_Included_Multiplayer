@@ -65,4 +65,9 @@
 	<ItemGroup>
 	  <PackageReference Include="RiptideNetworking.Riptide" Version="2.2.1" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="PLib" Version="4.22.0" />
+	</ItemGroup>
+
 </Project>
