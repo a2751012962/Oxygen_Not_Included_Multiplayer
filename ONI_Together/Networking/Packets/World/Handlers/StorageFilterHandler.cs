@@ -36,7 +36,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					{
 						Tag tag = new Tag(packet.StringValue);
 						treeFilterable.AddTagToFilter(tag);
-						DebugConsole.Log($"[StorageFilterHandler] Added filter tag {tag} on {go.name}");
+						//DebugConsole.Log($"[StorageFilterHandler] Added filter tag {tag} on {go.name}");
 						return true;
 					}
 				}
@@ -47,7 +47,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					{
 						Tag tag = new Tag(packet.StringValue);
 						treeFilterable.RemoveTagFromFilter(tag);
-						DebugConsole.Log($"[StorageFilterHandler] Removed filter tag {tag} on {go.name}");
+						//DebugConsole.Log($"[StorageFilterHandler] Removed filter tag {tag} on {go.name}");
 						return true;
 					}
 				}
@@ -58,7 +58,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (storage != null && hash == "StorageSweepOnly".GetHashCode())
 			{
 				storage.SetOnlyFetchMarkedItems(packet.Value > 0.5f);
-				DebugConsole.Log($"[StorageFilterHandler] Set SweepOnly={packet.Value > 0.5f} on {go.name}");
+				//DebugConsole.Log($"[StorageFilterHandler] Set SweepOnly={packet.Value > 0.5f} on {go.name}");
 				return true;
 			}
 

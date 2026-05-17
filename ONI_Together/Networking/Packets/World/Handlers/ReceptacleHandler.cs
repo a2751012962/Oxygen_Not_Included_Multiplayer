@@ -37,12 +37,12 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 						if (entityTag.IsValid)
 						{
 							receptacle.CreateOrder(entityTag, Tag.Invalid);
-							DebugConsole.Log($"[ReceptacleHandler] Created order for {entityTag} on {go.name}");
+							//DebugConsole.Log($"[ReceptacleHandler] Created order for {entityTag} on {go.name}");
 						}
 						else
 						{
 							receptacle.CancelActiveRequest();
-							DebugConsole.Log($"[ReceptacleHandler] Cancelled order on {go.name}");
+							//DebugConsole.Log($"[ReceptacleHandler] Cancelled order on {go.name}");
 						}
 						return true;
 					}
@@ -57,7 +57,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (hash == "ReceptacleCancelRequest".GetHashCode())
 				{
 					receptacle.CancelActiveRequest();
-					DebugConsole.Log($"[ReceptacleHandler] Cancelled request on {go.name}");
+					//DebugConsole.Log($"[ReceptacleHandler] Cancelled request on {go.name}");
 					return true;
 				}
 			}
@@ -67,7 +67,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (incubator != null && hash == "IncubatorAutoReplace".GetHashCode())
 			{
 				incubator.autoReplaceEntity = packet.Value > 0.5f;
-				DebugConsole.Log($"[ReceptacleHandler] Set autoReplaceEntity={incubator.autoReplaceEntity} on {go.name}");
+				//DebugConsole.Log($"[ReceptacleHandler] Set autoReplaceEntity={incubator.autoReplaceEntity} on {go.name}");
 				return true;
 			}
 

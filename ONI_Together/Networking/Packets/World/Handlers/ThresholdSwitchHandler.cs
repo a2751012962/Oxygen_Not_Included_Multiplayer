@@ -30,14 +30,14 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (hash == "Threshold".GetHashCode())
 			{
 				thresholdSwitch.Threshold = packet.Value;
-				DebugConsole.Log($"[ThresholdSwitchHandler] Set Threshold={packet.Value} on {go.name}");
+				//DebugConsole.Log($"[ThresholdSwitchHandler] Set Threshold={packet.Value} on {go.name}");
 				return true;
 			}
 
 			if (hash == "ThresholdDirection".GetHashCode() || hash == "ThresholdDir".GetHashCode())
 			{
 				thresholdSwitch.ActivateAboveThreshold = packet.Value > 0.5f;
-				DebugConsole.Log($"[ThresholdSwitchHandler] Set ActivateAboveThreshold={packet.Value > 0.5f} on {go.name}");
+				//DebugConsole.Log($"[ThresholdSwitchHandler] Set ActivateAboveThreshold={packet.Value > 0.5f} on {go.name}");
 				return true;
 			}
 

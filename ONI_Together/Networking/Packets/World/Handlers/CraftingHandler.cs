@@ -36,7 +36,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (recipe.id.GetHashCode() == targetRecipeHash)
 				{
 					fabricator.SetRecipeQueueCount(recipe, count);
-					DebugConsole.Log($"[CraftingHandler] Set recipe '{recipe.id}' count={count} on {go.name}");
+					//DebugConsole.Log($"[CraftingHandler] Set recipe '{recipe.id}' count={count} on {go.name}");
 					return true;
 				}
 			}

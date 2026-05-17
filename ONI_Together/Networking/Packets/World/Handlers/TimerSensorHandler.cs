@@ -32,13 +32,13 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (hash == "TimerOnDuration".GetHashCode())
 				{
 					timerSensor.onDuration = packet.Value;
-					DebugConsole.Log($"[TimerSensorHandler] Set onDuration={packet.Value} on {go.name}");
+					//DebugConsole.Log($"[TimerSensorHandler] Set onDuration={packet.Value} on {go.name}");
 					return true;
 				}
 				if (hash == "TimerOffDuration".GetHashCode())
 				{
 					timerSensor.offDuration = packet.Value;
-					DebugConsole.Log($"[TimerSensorHandler] Set offDuration={packet.Value} on {go.name}");
+					//DebugConsole.Log($"[TimerSensorHandler] Set offDuration={packet.Value} on {go.name}");
 					return true;
 				}
 			}
@@ -50,13 +50,13 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (hash == "StartTime".GetHashCode())
 				{
 					cycleSensor.startTime = packet.Value;
-					DebugConsole.Log($"[TimerSensorHandler] Set startTime={packet.Value} on {go.name}");
+					//DebugConsole.Log($"[TimerSensorHandler] Set startTime={packet.Value} on {go.name}");
 					return true;
 				}
 				if (hash == "Duration".GetHashCode())
 				{
 					cycleSensor.duration = packet.Value;
-					DebugConsole.Log($"[TimerSensorHandler] Set duration={packet.Value} on {go.name}");
+					//DebugConsole.Log($"[TimerSensorHandler] Set duration={packet.Value} on {go.name}");
 					return true;
 				}
 			}

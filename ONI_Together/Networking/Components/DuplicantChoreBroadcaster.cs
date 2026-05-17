@@ -35,7 +35,7 @@ namespace ONI_Together.Networking.Components
 			using var _ = Profiler.Scope();
 			if (!MultiplayerSession.IsHostInSession) return;
 			if (identity == null || consumer == null || selectable == null) return;
-			//if (!SubscribedNetIds.Contains(identity.NetId)) return;
+			if (!SubscribedNetIds.Contains(identity.NetId)) return;
 
 			timeSinceLastBroadcast += dt;
 			bool immediate = PendingImmediate.Remove(identity.NetId);
@@ -88,7 +88,7 @@ namespace ONI_Together.Networking.Components
 			AppendEntriesMerged(packet, _scratchSnapshot.succeededContexts, ref lastContext, ref hasLastContext, ref listIndex);
 			AppendEntriesMerged(packet, _scratchSnapshot.failedContexts, ref lastContext, ref hasLastContext, ref listIndex);
 
-			PacketSender.SendToAllClients(packet);
+			PacketSender.SendToAllClients(packet, PacketSendMode.Unreliable);
 		}
 
 		private void AppendCurrentChore(ChoreErrandsPacket packet, ref int listIndex)

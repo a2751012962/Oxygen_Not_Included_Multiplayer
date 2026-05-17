@@ -46,7 +46,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (hash == "UprootPlant".GetHashCode())
 			{
 				uprootable.MarkForUproot();
-				DebugConsole.Log($"[UprootHandler] Marked plant for uproot at cell {packet.Cell}");
+				//DebugConsole.Log($"[UprootHandler] Marked plant for uproot at cell {packet.Cell}");
 				return true;
 			}
 

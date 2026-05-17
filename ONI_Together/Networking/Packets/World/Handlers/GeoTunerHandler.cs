@@ -42,7 +42,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			}
 
 			geoTuner.AssignFutureGeyser(targetGeyser);
-			DebugConsole.Log($"[GeoTunerHandler] Set geyser to {targetGeyser?.name ?? "null"} on {go.name}");
+			//DebugConsole.Log($"[GeoTunerHandler] Set geyser to {targetGeyser?.name ?? "null"} on {go.name}");
 			return true;
 		}
 	}

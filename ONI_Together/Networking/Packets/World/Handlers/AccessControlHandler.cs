@@ -38,7 +38,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					Tag groupTag = new Tag(packet.StringValue);
 					AccessControl.Permission permission = (AccessControl.Permission)(int)packet.Value;
 					accessControl.SetDefaultPermission(groupTag, permission);
-					DebugConsole.Log($"[AccessControlHandler] Set default permission group={groupTag}, permission={permission} on {go.name}");
+					//DebugConsole.Log($"[AccessControlHandler] Set default permission group={groupTag}, permission={permission} on {go.name}");
 					return true;
 				}
 			}
@@ -60,12 +60,12 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 						if (proxy != null)
 						{
 							accessControl.SetPermission(proxy, permission);
-							DebugConsole.Log($"[AccessControlHandler] Set minion permission minionNetId={minionNetId}, permission={permission} on {go.name}");
+							//DebugConsole.Log($"[AccessControlHandler] Set minion permission minionNetId={minionNetId}, permission={permission} on {go.name}");
 							return true;
 						}
 					}
 				}
-				DebugConsole.Log($"[AccessControlHandler] Could not find minion with NetID={minionNetId}");
+				//DebugConsole.Log($"[AccessControlHandler] Could not find minion with NetID={minionNetId}");
 				return true; // Still return true to prevent "unhandled" warning
 			}
 
@@ -84,12 +84,12 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 						if (proxy != null)
 						{
 							accessControl.ClearPermission(proxy);
-							DebugConsole.Log($"[AccessControlHandler] Cleared permission for minionNetId={minionNetId} on {go.name}");
+							//DebugConsole.Log($"[AccessControlHandler] Cleared permission for minionNetId={minionNetId} on {go.name}");
 							return true;
 						}
 					}
 				}
-				DebugConsole.Log($"[AccessControlHandler] Could not find minion with NetID={minionNetId} for clear");
+				//DebugConsole.Log($"[AccessControlHandler] Could not find minion with NetID={minionNetId} for clear");
 				return true;
 			}
 
@@ -101,7 +101,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					Tag robotTag = new Tag(packet.StringValue);
 					AccessControl.Permission permission = (AccessControl.Permission)(int)packet.Value;
 					accessControl.SetPermission(robotTag, permission);
-					DebugConsole.Log($"[AccessControlHandler] Set robot permission tag={robotTag}, permission={permission} on {go.name}");
+					//DebugConsole.Log($"[AccessControlHandler] Set robot permission tag={robotTag}, permission={permission} on {go.name}");
 					return true;
 				}
 			}
@@ -114,7 +114,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					Tag robotTag = new Tag(packet.StringValue);
 					// Clear robot permission - uses GameTags.Robot as the default key
 					accessControl.ClearPermission(robotTag, GameTags.Robot);
-					DebugConsole.Log($"[AccessControlHandler] Cleared robot permission for tag={robotTag} on {go.name}");
+					//DebugConsole.Log($"[AccessControlHandler] Cleared robot permission for tag={robotTag} on {go.name}");
 					return true;
 				}
 			}

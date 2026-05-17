@@ -43,7 +43,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					alarm.notificationName = packet.StringValue;
 					alarm.UpdateNotification(true);
-					DebugConsole.Log($"[AlarmHandler] Set notificationName='{packet.StringValue}' on {go.name}");
+					//DebugConsole.Log($"[AlarmHandler] Set notificationName='{packet.StringValue}' on {go.name}");
 					return true;
 				}
 			}
@@ -55,7 +55,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					alarm.notificationTooltip = packet.StringValue ?? "";
 					alarm.UpdateNotification(true);
-					DebugConsole.Log($"[AlarmHandler] Set notificationTooltip='{packet.StringValue}' on {go.name}");
+					//DebugConsole.Log($"[AlarmHandler] Set notificationTooltip='{packet.StringValue}' on {go.name}");
 					return true;
 				}
 			}
@@ -65,7 +65,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			{
 				alarm.pauseOnNotify = packet.Value > 0.5f;
 				alarm.UpdateNotification(true);
-				DebugConsole.Log($"[AlarmHandler] Set pauseOnNotify={alarm.pauseOnNotify} on {go.name}");
+				//DebugConsole.Log($"[AlarmHandler] Set pauseOnNotify={alarm.pauseOnNotify} on {go.name}");
 				return true;
 			}
 
@@ -74,7 +74,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			{
 				alarm.zoomOnNotify = packet.Value > 0.5f;
 				alarm.UpdateNotification(true);
-				DebugConsole.Log($"[AlarmHandler] Set zoomOnNotify={alarm.zoomOnNotify} on {go.name}");
+				//DebugConsole.Log($"[AlarmHandler] Set zoomOnNotify={alarm.zoomOnNotify} on {go.name}");
 				return true;
 			}
 
@@ -83,7 +83,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			{
 				alarm.notificationType = (NotificationType)(int)packet.Value;
 				alarm.UpdateNotification(true);
-				DebugConsole.Log($"[AlarmHandler] Set notificationType={alarm.notificationType} on {go.name}");
+				//DebugConsole.Log($"[AlarmHandler] Set notificationType={alarm.notificationType} on {go.name}");
 				return true;
 			}
 

@@ -75,7 +75,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 
 			// LogicSwitch
 			var logicSwitch = go.GetComponent<LogicSwitch>();
-			DebugConsole.Log($"[MiscBuildingHandler] Checking LogicSwitch: component={logicSwitch != null}, hash={hash}, expected={logicSwitchHash}");
+			//DebugConsole.Log($"[MiscBuildingHandler] Checking LogicSwitch: component={logicSwitch != null}, hash={hash}, expected={logicSwitchHash}");
 
 			if (hash == logicSwitchHash || hash == logicStateHash)
 			{
@@ -83,8 +83,8 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					bool targetState = packet.Value > 0.5f;
 					// Use Traverse to call SetState since it may be private/protected
-					Traverse.Create(logicSwitch).Method("SetState", new[] { typeof(bool) }).GetValue(targetState);
-					DebugConsole.Log($"[MiscBuildingHandler] Set LogicSwitch state={targetState} on {go.name}");
+					logicSwitch.SetState(targetState);
+					//DebugConsole.Log($"[MiscBuildingHandler] Set LogicSwitch state={targetState} on {go.name}");
 					return true;
 				}
 				else
@@ -113,27 +113,27 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					counter.maxCount = (int)packet.Value;
 					counter.SetCounterState();
-					DebugConsole.Log($"[MiscBuildingHandler] Set counter maxCount={counter.maxCount} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set counter maxCount={counter.maxCount} on {go.name}");
 					return true;
 				}
 				if (hash == "CounterAdvancedMode".GetHashCode())
 				{
 					counter.advancedMode = packet.Value > 0.5f;
 					counter.SetCounterState();
-					DebugConsole.Log($"[MiscBuildingHandler] Set counter advancedMode={counter.advancedMode} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set counter advancedMode={counter.advancedMode} on {go.name}");
 					return true;
 				}
 				if (hash == "CounterResetAtMax".GetHashCode())
 				{
 					counter.resetCountAtMax = packet.Value > 0.5f;
 					counter.SetCounterState();
-					DebugConsole.Log($"[MiscBuildingHandler] Set counter resetCountAtMax={counter.resetCountAtMax} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set counter resetCountAtMax={counter.resetCountAtMax} on {go.name}");
 					return true;
 				}
 				if (hash == "CounterReset".GetHashCode())
 				{
 					counter.ResetCounter();
-					DebugConsole.Log($"[MiscBuildingHandler] Reset counter on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Reset counter on {go.name}");
 					return true;
 				}
 			}
@@ -145,13 +145,13 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (hash == "CritterSensorCountCritters".GetHashCode() || hash == "CritterCountCritters".GetHashCode())
 				{
 					critterSensor.countCritters = packet.Value > 0.5f;
-					DebugConsole.Log($"[MiscBuildingHandler] Set countCritters={critterSensor.countCritters} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set countCritters={critterSensor.countCritters} on {go.name}");
 					return true;
 				}
 				if (hash == "CritterSensorCountEggs".GetHashCode() || hash == "CritterCountEggs".GetHashCode())
 				{
 					critterSensor.countEggs = packet.Value > 0.5f;
-					DebugConsole.Log($"[MiscBuildingHandler] Set countEggs={critterSensor.countEggs} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set countEggs={critterSensor.countEggs} on {go.name}");
 					return true;
 				}
 			}
@@ -161,7 +161,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (limitValve != null && (hash == "LimitValveLimit".GetHashCode() || hash == "LimitValve".GetHashCode()))
 			{
 				limitValve.Limit = packet.Value;
-				DebugConsole.Log($"[MiscBuildingHandler] Set LimitValve Limit={packet.Value} on {go.name}");
+				//DebugConsole.Log($"[MiscBuildingHandler] Set LimitValve Limit={packet.Value} on {go.name}");
 				return true;
 			}
 
@@ -170,7 +170,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (manualGenerator != null && hash == "ManualGeneratorThreshold".GetHashCode())
 			{
 				Traverse.Create(manualGenerator).Field("refillPercent").SetValue(packet.Value);
-				DebugConsole.Log($"[MiscBuildingHandler] Set ManualGenerator refillPercent={packet.Value} on {go.name}");
+				//DebugConsole.Log($"[MiscBuildingHandler] Set ManualGenerator refillPercent={packet.Value} on {go.name}");
 				return true;
 			}
 
@@ -179,7 +179,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (bottleEmptier != null && hash == "BottleEmptierAllowManualPump".GetHashCode())
 			{
 				bottleEmptier.allowManualPumpingStationFetching = packet.Value > 0.5f;
-				DebugConsole.Log($"[MiscBuildingHandler] Set BottleEmptier allowManualPump={packet.Value > 0.5f} on {go.name}");
+				//DebugConsole.Log($"[MiscBuildingHandler] Set BottleEmptier allowManualPump={packet.Value > 0.5f} on {go.name}");
 				return true;
 			}
 
@@ -190,7 +190,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (checkbox != null)
 				{
 					checkbox.SetCheckboxValue(packet.Value > 0.5f);
-					DebugConsole.Log($"[MiscBuildingHandler] Set Checkbox={packet.Value > 0.5f} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set Checkbox={packet.Value > 0.5f} on {go.name}");
 					return true;
 				}
 			}
@@ -200,7 +200,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (automatable != null && (hash == "AutomatableAutomationOnly".GetHashCode() || hash == "AutomationOnly".GetHashCode()))
 			{
 				automatable.SetAutomationOnly(packet.Value > 0.5f);
-				DebugConsole.Log($"[MiscBuildingHandler] Set AutomationOnly={packet.Value > 0.5f} on {go.name}");
+				//DebugConsole.Log($"[MiscBuildingHandler] Set AutomationOnly={packet.Value > 0.5f} on {go.name}");
 				return true;
 			}
 
@@ -209,7 +209,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (directionControl != null && (hash == "LoopConveyorDirection".GetHashCode() || hash == "DirectionControl".GetHashCode()))
 			{
 				directionControl.SetAllowedDirection((WorkableReactable.AllowedDirection)(int)packet.Value);
-				DebugConsole.Log($"[MiscBuildingHandler] Set Direction={(WorkableReactable.AllowedDirection)(int)packet.Value} on {go.name}");
+				//DebugConsole.Log($"[MiscBuildingHandler] Set Direction={(WorkableReactable.AllowedDirection)(int)packet.Value} on {go.name}");
 				return true;
 			}
 
@@ -218,7 +218,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (valve != null && hash == "Rate".GetHashCode())
 			{
 				Traverse.Create(valve).Method("ChangeFlow", packet.Value).GetValue();
-				DebugConsole.Log($"[MiscBuildingHandler] Set Valve Rate={packet.Value} on {go.name}");
+				//DebugConsole.Log($"[MiscBuildingHandler] Set Valve Rate={packet.Value} on {go.name}");
 				return true;
 			}
 
@@ -227,7 +227,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (foodStorage != null && hash == "FoodStorageSpicedFoodOnly".GetHashCode())
 			{
 				foodStorage.SpicedFoodOnly = packet.Value > 0.5f;
-				DebugConsole.Log($"[MiscBuildingHandler] Set SpicedFoodOnly={packet.Value > 0.5f} on {go.name}");
+				//DebugConsole.Log($"[MiscBuildingHandler] Set SpicedFoodOnly={packet.Value > 0.5f} on {go.name}");
 				return true;
 			}
 
@@ -239,7 +239,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					Tag tag = new Tag(packet.StringValue);
 					iceMachine.OnOptionSelected(new FewOptionSideScreen.IFewOptionSideScreen.Option(tag, null, null));
-					DebugConsole.Log($"[MiscBuildingHandler] Set IceMachine element={tag} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set IceMachine element={tag} on {go.name}");
 					return true;
 				}
 			}
@@ -253,14 +253,14 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					if (!string.IsNullOrEmpty(packet.StringValue))
 					{
 						artable.SetUserChosenTargetState(packet.StringValue);
-						DebugConsole.Log($"[MiscBuildingHandler] Set Artable state={packet.StringValue} on {go.name}");
+						//DebugConsole.Log($"[MiscBuildingHandler] Set Artable state={packet.StringValue} on {go.name}");
 						return true;
 					}
 				}
 				if (hash == "ArtableDefault".GetHashCode())
 				{
 					artable.SetDefault();
-					DebugConsole.Log($"[MiscBuildingHandler] Reset Artable to default on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Reset Artable to default on {go.name}");
 					return true;
 				}
 			}
@@ -272,19 +272,19 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (hash == "SuitLockerRequestSuit".GetHashCode())
 				{
 					suitLocker.ConfigRequestSuit();
-					DebugConsole.Log($"[MiscBuildingHandler] ConfigRequestSuit on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] ConfigRequestSuit on {go.name}");
 					return true;
 				}
 				if (hash == "SuitLockerNoSuit".GetHashCode())
 				{
 					suitLocker.ConfigNoSuit();
-					DebugConsole.Log($"[MiscBuildingHandler] ConfigNoSuit on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] ConfigNoSuit on {go.name}");
 					return true;
 				}
 				if (hash == "SuitLockerDropSuit".GetHashCode())
 				{
 					suitLocker.DropSuit();
-					DebugConsole.Log($"[MiscBuildingHandler] DropSuit on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] DropSuit on {go.name}");
 					return true;
 				}
 			}
@@ -307,7 +307,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					}
 
 					terminal.FutureDock = targetDock;
-					DebugConsole.Log($"[MiscBuildingHandler] Set RemoteWorkTerminal FutureDock={targetDock?.GetProperName() ?? "null"} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] Set RemoteWorkTerminal FutureDock={targetDock?.GetProperName() ?? "null"} on {go.name}");
 					return true;
 				}
 			}
@@ -320,12 +320,12 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					// Use Traverse to call private method
 					Traverse.Create(suitMarker).Method("OnEnableTraverseIfUnequipAvailable").GetValue();
-					DebugConsole.Log($"[MiscBuildingHandler] SuitMarker clearance=OnlyWhenRoomAvailable on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] SuitMarker clearance=OnlyWhenRoomAvailable on {go.name}");
 				}
 				else
 				{
 					Traverse.Create(suitMarker).Method("OnDisableTraverseIfUnequipAvailable").GetValue();
-					DebugConsole.Log($"[MiscBuildingHandler] SuitMarker clearance=Always on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] SuitMarker clearance=Always on {go.name}");
 				}
 				return true;
 			}
@@ -345,7 +345,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					{
 						flatTagFilter.ToggleTag(tag);
 					}
-					DebugConsole.Log($"[MiscBuildingHandler] FlatTagFilter tag={tag.Name}, selected={shouldBeSelected} on {go.name}");
+					//DebugConsole.Log($"[MiscBuildingHandler] FlatTagFilter tag={tag.Name}, selected={shouldBeSelected} on {go.name}");
 					return true;
 				}
 			}

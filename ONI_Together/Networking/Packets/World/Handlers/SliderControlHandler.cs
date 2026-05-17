@@ -32,7 +32,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					try
 					{
 						singleSlider.SetSliderValue(packet.Value, -1);
-						DebugConsole.Log($"[SliderControlHandler] Set SingleSlider value={packet.Value} on {go.name}");
+						//DebugConsole.Log($"[SliderControlHandler] Set SingleSlider value={packet.Value} on {go.name}");
 					}
 					catch (System.Exception e)
 					{
@@ -53,7 +53,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 						int sliderIndex = (int)(packet.Value / 1000000f);
 						float actualValue = packet.Value - (sliderIndex * 1000000f);
 						sliderControl.SetSliderValue(actualValue, sliderIndex);
-						DebugConsole.Log($"[SliderControlHandler] Set Slider[{sliderIndex}]={actualValue} on {go.name}");
+						//DebugConsole.Log($"[SliderControlHandler] Set Slider[{sliderIndex}]={actualValue} on {go.name}");
 					}
 					catch (System.Exception e)
 					{

@@ -32,7 +32,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			bool allowed = packet.Value > 0.5f;
 			missileLauncher.ChangeAmmunition(ammoTag, allowed);
 
-			DebugConsole.Log($"[MissileLauncherHandler] Set ammo {packet.StringValue}={allowed} on {go.name}");
+			//DebugConsole.Log($"[MissileLauncherHandler] Set ammo {packet.StringValue}={allowed} on {go.name}");
 			return true;
 		}
 	}

@@ -31,14 +31,14 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 
             if (go == null)
             {
-                DebugConsole.LogError($"[ToggleableHandler] HUGE Nope!");
+                //DebugConsole.LogError($"[ToggleableHandler] HUGE Nope!");
                 return false;
             }
 
             Toggleable toggleable = go.GetComponent<Toggleable>();
 
             if (toggleable == null) {
-                DebugConsole.LogError($"[ToggleableHandler] Big Nope!");
+                //DebugConsole.LogError($"[ToggleableHandler] Big Nope!");
                 return false;
             }
 
@@ -47,17 +47,17 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 
             if (targetIndex == -1)
             {
-                DebugConsole.LogError($"[ToggleableHandler] Nope!");
+                //DebugConsole.LogError($"[ToggleableHandler] Nope!");
                 return false;
             }
 
-            DebugConsole.Log($"[ToggleableHandler] Handling Toggleable Change on {go.name} with Index {targetIndex}");
+            //DebugConsole.Log($"[ToggleableHandler] Handling Toggleable Change on {go.name} with Index {targetIndex}");
 
             bool targetState = packet.Value > 0.5f;
 
             if (packet.ConfigHash == "QueueToggleable".GetHashCode())
             {
-                DebugConsole.Log($"[ToggleableHandler] Queue Toggleable Change current={toggleable.IsToggleQueued(targetIndex)} new={targetState}");
+                //DebugConsole.Log($"[ToggleableHandler] Queue Toggleable Change current={toggleable.IsToggleQueued(targetIndex)} new={targetState}");
 
                 // Check if we are already in our target state
                 if (targetState != toggleable.IsToggleQueued(targetIndex)) toggleable.Toggle(targetIndex);
@@ -66,7 +66,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
             else if (packet.ConfigHash == "ToggleableChange".GetHashCode())
             {
                 IToggleHandler handler = targets[targetIndex].Key;
-                DebugConsole.Log($"[ToggleableHandler] Changing Toggleable State current={handler.IsHandlerOn()} new={targetState}");
+                //DebugConsole.Log($"[ToggleableHandler] Changing Toggleable State current={handler.IsHandlerOn()} new={targetState}");
 
                 // Check if we are already in our target state
                 if (targetState != handler.IsHandlerOn())

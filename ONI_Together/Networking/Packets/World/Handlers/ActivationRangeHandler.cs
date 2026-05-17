@@ -35,13 +35,13 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (hash == "SmartReservoirActivate".GetHashCode())
 			{
 				activationRange.ActivateValue = packet.Value;
-				DebugConsole.Log($"[ActivationRangeHandler] Set SmartReservoir ActivateValue={packet.Value}");
+				//DebugConsole.Log($"[ActivationRangeHandler] Set SmartReservoir ActivateValue={packet.Value}");
 				return true;
 			}
 			if (hash == "SmartReservoirDeactivate".GetHashCode())
 			{
 				activationRange.DeactivateValue = packet.Value;
-				DebugConsole.Log($"[ActivationRangeHandler] Set SmartReservoir DeactivateValue={packet.Value}");
+				//DebugConsole.Log($"[ActivationRangeHandler] Set SmartReservoir DeactivateValue={packet.Value}");
 				return true;
 			}
 
@@ -49,13 +49,13 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (hash == "MassageTableActivate".GetHashCode())
 			{
 				activationRange.ActivateValue = packet.Value;
-				DebugConsole.Log($"[ActivationRangeHandler] Set MassageTable ActivateValue={packet.Value}");
+				//DebugConsole.Log($"[ActivationRangeHandler] Set MassageTable ActivateValue={packet.Value}");
 				return true;
 			}
 			if (hash == "MassageTableDeactivate".GetHashCode())
 			{
 				activationRange.DeactivateValue = packet.Value;
-				DebugConsole.Log($"[ActivationRangeHandler] Set MassageTable DeactivateValue={packet.Value}");
+				//DebugConsole.Log($"[ActivationRangeHandler] Set MassageTable DeactivateValue={packet.Value}");
 				return true;
 			}
 
@@ -63,13 +63,13 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (hash == "Activate".GetHashCode())
 			{
 				activationRange.ActivateValue = packet.Value;
-				DebugConsole.Log($"[ActivationRangeHandler] Set ActivateValue={packet.Value}");
+				//DebugConsole.Log($"[ActivationRangeHandler] Set ActivateValue={packet.Value}");
 				return true;
 			}
 			if (hash == "Deactivate".GetHashCode())
 			{
 				activationRange.DeactivateValue = packet.Value;
-				DebugConsole.Log($"[ActivationRangeHandler] Set DeactivateValue={packet.Value}");
+				//DebugConsole.Log($"[ActivationRangeHandler] Set DeactivateValue={packet.Value}");
 				return true;
 			}
 

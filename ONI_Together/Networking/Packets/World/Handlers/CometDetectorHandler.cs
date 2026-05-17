@@ -35,7 +35,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					var state = (ClusterCometDetector.Instance.ClusterCometDetectorState)(int)packet.Value;
 					clusterDetector.SetDetectorState(state);
-					DebugConsole.Log($"[CometDetectorHandler] Set ClusterCometDetector state={state} on {go.name}");
+					//DebugConsole.Log($"[CometDetectorHandler] Set ClusterCometDetector state={state} on {go.name}");
 					return true;
 				}
 			}
@@ -59,7 +59,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					}
 
 					clusterDetector.SetClustercraftTarget(targetCraft);
-					DebugConsole.Log($"[CometDetectorHandler] Set ClusterCometDetector target={targetCraft?.Name ?? "null"} on {go.name}");
+					//DebugConsole.Log($"[CometDetectorHandler] Set ClusterCometDetector target={targetCraft?.Name ?? "null"} on {go.name}");
 					return true;
 				}
 			}
@@ -85,7 +85,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 					}
 
 					detector.SetTargetCraft(targetCraft);
-					DebugConsole.Log($"[CometDetectorHandler] Set CometDetector target NetId={targetNetId} on {go.name}");
+					//DebugConsole.Log($"[CometDetectorHandler] Set CometDetector target NetId={targetNetId} on {go.name}");
 					return true;
 				}
 			}

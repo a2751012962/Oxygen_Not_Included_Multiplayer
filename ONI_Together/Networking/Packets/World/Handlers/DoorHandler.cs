@@ -27,7 +27,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 
 			Door.ControlState state = (Door.ControlState)(int)packet.Value;
 			door.QueueStateChange(state);
-			DebugConsole.Log($"[DoorHandler] Set DoorState={state} on {go.name}");
+			//DebugConsole.Log($"[DoorHandler] Set DoorState={state} on {go.name}");
 			return true;
 		}
 	}

@@ -26,7 +26,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 			if (capacityControl == null) return false;
 
 			capacityControl.UserMaxCapacity = packet.Value;
-			DebugConsole.Log($"[CapacityHandler] Set UserMaxCapacity={packet.Value} on {go.name}");
+			//DebugConsole.Log($"[CapacityHandler] Set UserMaxCapacity={packet.Value} on {go.name}");
 			return true;
 		}
 	}

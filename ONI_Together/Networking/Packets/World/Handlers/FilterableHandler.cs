@@ -34,7 +34,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				if (element != null)
 				{
 					filterable.SelectedTag = element.tag;
-					DebugConsole.Log($"[FilterableHandler] Set FilterElement={element.tag} on {go.name}");
+					//DebugConsole.Log($"[FilterableHandler] Set FilterElement={element.tag} on {go.name}");
 					return true;
 				}
 			}
@@ -45,7 +45,7 @@ namespace ONI_Together.Networking.Packets.World.Handlers
 				{
 					Tag tag = new Tag(packet.StringValue);
 					filterable.SelectedTag = tag;
-					DebugConsole.Log($"[FilterableHandler] Set FilterTag={tag} on {go.name}");
+					//DebugConsole.Log($"[FilterableHandler] Set FilterTag={tag} on {go.name}");
 					return true;
 				}
 			}
