@@ -28,6 +28,7 @@ namespace ONI_Together.Networking.Packets.Core
 		public bool Dragging = false;
 		public Vector3 AreaDownPos;
 		public DragTool.Mode DragMode = DragTool.Mode.Box;
+		public Vector2 LengthLimit = Vector2.zero;
 
         // Viewport for targeted sync
         public int ViewMinX, ViewMinY, ViewMaxX, ViewMaxY;
@@ -52,6 +53,7 @@ namespace ONI_Together.Networking.Packets.Core
 			writer.Write(Dragging);
 			writer.Write(AreaDownPos);
 			writer.Write((int)DragMode);
+			writer.Write(LengthLimit);
 		}
 
 		public void Deserialize(BinaryReader reader)
@@ -74,6 +76,7 @@ namespace ONI_Together.Networking.Packets.Core
 			Dragging = reader.ReadBoolean();
             AreaDownPos = reader.ReadVector3();
 			DragMode = (DragTool.Mode)reader.ReadInt32();
+			LengthLimit = reader.ReadVector2();
 		}
 
 		public void OnDispatched()
@@ -137,7 +140,7 @@ namespace ONI_Together.Networking.Packets.Core
 		private void UpdateVisualizers(PlayerCursor cursor, Vector3 position)
 		{
 			cursor.buildingVisualiser.UpdateVisualizer(BuildingPrefabId, position, BuildingOrientation, Color, BuildingAllowed);
-			cursor.areaVisualizer.UpdateArea(Color, AreaDownPos, Position, Dragging, DragMode);
+			cursor.areaVisualizer.UpdateArea(Color, AreaDownPos, Position, Dragging, DragMode, LengthLimit);
 		}
 
 	}

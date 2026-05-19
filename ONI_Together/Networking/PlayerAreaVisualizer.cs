@@ -62,7 +62,7 @@ namespace ONI_Together.Networking
             }
         }
 
-        public void UpdateArea(Color color, Vector3 downPos, Vector3 cursorPos, bool dragging, DragTool.Mode dragMode)
+        public void UpdateArea(Color color, Vector3 downPos, Vector3 cursorPos, bool dragging, DragTool.Mode dragMode, Vector2 lengthLimit)
         {
             Color = color;
 
@@ -88,6 +88,7 @@ namespace ONI_Together.Networking
             }
 
             cursorPos = SnapCursorForLineMode(downPos, cursorPos, dragMode);
+            cursorPos = ClampToLengthLimit(downPos, cursorPos, dragMode, lengthLimit);
             ApplyAreaRect(downPos, cursorPos);
             _visualizer.SetActive(true);
         }
@@ -126,6 +127,33 @@ namespace ONI_Together.Networking
                 cursorPos.x = downPos.x;
 
             return cursorPos;
+        }
+
+        private static Vector3 ClampToLengthLimit(Vector3 downPos, Vector3 cursorPos, DragTool.Mode mode, Vector2 lengthLimit)
+        {
+            if (lengthLimit == Vector2.zero)
+                return cursorPos;
+
+            float cellSize = Grid.CellSizeInMeters;
+            Vector3 offset = cursorPos - downPos;
+
+            float maxX = Mathf.Max(0f, lengthLimit.x - 1f) * cellSize;
+            float maxY = Mathf.Max(0f, lengthLimit.y - 1f) * cellSize;
+
+            if (mode == DragTool.Mode.Box)
+            {
+                offset.x = Mathf.Clamp(offset.x, -maxX, maxX);
+                offset.y = Mathf.Clamp(offset.y, -maxY, maxY);
+            }
+            else if (mode == DragTool.Mode.Line)
+            {
+                if (cursorPos.y == downPos.y)
+                    offset.x = Mathf.Clamp(offset.x, -maxX, maxX);
+                else
+                    offset.y = Mathf.Clamp(offset.y, -maxY, maxY);
+            }
+
+            return downPos + offset;
         }
 
         private void ApplyAreaRect(Vector3 downPos, Vector3 cursorPos)

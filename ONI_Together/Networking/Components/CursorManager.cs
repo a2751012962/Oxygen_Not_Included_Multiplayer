@@ -140,8 +140,9 @@ namespace ONI_Together.Networking.Components
 			Vector3 areaDownPos = Vector3.zero;
 			bool dragging = false;
 			DragTool.Mode dragMode = DragTool.Mode.Box;
+			Vector2 lengthLimit = Vector2.zero;
 
-			if(interfaceTool is DragTool dragTool)
+            if (interfaceTool is DragTool dragTool)
 			{
                 dragging = dragTool.Dragging;
 
@@ -153,7 +154,14 @@ namespace ONI_Together.Networking.Components
 					if(Input.GetKey((KeyCode)Global.GetInputManager().GetDefaultController().GetInputForAction(Action.DragStraight))) {
 						dragMode = DragTool.Mode.Line;
 					}
-				}
+
+                    if (dragTool is DisconnectTool disconnectTool)
+                    {
+                        // Disconnect tool uses Line mode
+                        dragMode = DragTool.Mode.Line;
+						lengthLimit = new Vector2(2, 2);
+                    }
+                }
 			}
 
 			var packet = new PlayerCursorPacket
@@ -173,7 +181,8 @@ namespace ONI_Together.Networking.Components
 
 				Dragging = dragging,
                 AreaDownPos = areaDownPos,
-				DragMode = dragMode
+				DragMode = dragMode,
+				LengthLimit = lengthLimit
             };
 
 			if (MultiplayerSession.IsHost)
