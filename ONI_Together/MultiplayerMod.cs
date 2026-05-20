@@ -18,6 +18,8 @@ using static DistributionPlatform;
 using Epic.OnlineServices;
 using PeterHan.PLib.Core;
 using PeterHan.PLib.Options;
+using ONI_Together.Integrations;
+using System.Linq;
 
 namespace ONI_Together
 {
@@ -239,13 +241,40 @@ namespace ONI_Together
             base.OnAllModsLoaded(harmony, mods);
 			///does weird force restarts; replaced with plib version checker that doesnt restart the game
 			//ModUpdater.Updater.CheckForUpdate();
-
+			InitializeAllIntegrations(); // All mods should be loaded, now find and initialize any integrations
 #if DEBUG
-			UnitTestRegistry.DiscoverTests();
-			ProtocolCompatibility.BypassChecks = true; // If DEBUG bypass by default
+            UnitTestRegistry.DiscoverTests();
 #endif
 			// For now default to the steam transport
 			NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
 		}
-	}
+
+        public static void InitializeAllIntegrations()
+        {
+            var integrationType = typeof(Integration);
+
+            var assembly = integrationType.Assembly;
+
+            var integrations = assembly
+                .GetTypes()
+                .Where(t =>
+                    t != null &&
+                    !t.IsAbstract &&
+                    integrationType.IsAssignableFrom(t))
+                .ToList();
+
+            foreach (var type in integrations)
+            {
+                try
+                {
+                    var instance = (Integration)Activator.CreateInstance(type);
+                    instance.Initialize();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[IntegrationLoader] Failed to init {type.Name}: {e}");
+                }
+            }
+        }
+    }
 }

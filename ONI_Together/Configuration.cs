@@ -86,6 +86,14 @@ namespace ONI_Together
             set => Network.MaxPacketsPerSecond = Mathf.Clamp(value, 500, 1000);
         }
 
+        [Option("STRINGS.UI.CONFIGURATION.TITLES.NETWORK_SETTINGS.BYPASS_PROTOCOL_CHECKS", "STRINGS.UI.CONFIGURATION.TOOLTIPS.NETWORK_SETTINGS.BYPASS_PROTOCOL_CHECKS", "STRINGS.UI.CONFIGURATION.HEADERS.C_NETWORK_SETTINGS")]
+        [JsonIgnore]
+        public bool BypassProtocolCompatibilityChecks
+        {
+            get => Network.BypassProtocolCompatibilityChecks;
+            set => Network.BypassProtocolCompatibilityChecks = value;
+        }
+
         [Option("STRINGS.UI.CONFIGURATION.TITLES.CURSOR_SETTINGS.RANDOM_COLOR", "STRINGS.UI.CONFIGURATION.TOOLTIPS.CURSOR_SETTINGS.RANDOM_COLOR", "STRINGS.UI.CONFIGURATION.HEADERS.D_CURSOR_SETTINGS")]
         [JsonIgnore]
         public bool UseRandomPlayerColor
@@ -219,7 +227,8 @@ namespace ONI_Together
     public class NetworkSettings
     {
         [JsonProperty] public bool EnablePacketQueue { get; set; } = false;
-        [JsonProperty] public int MaxPacketsPerSecond { get; set; } = 500; // 0 unlimited
+        [JsonProperty] public int MaxPacketsPerSecond { get; set; } = 500;
+        [JsonProperty] public bool BypassProtocolCompatibilityChecks { get; set; } = false;
     }
 
     [Serializable]

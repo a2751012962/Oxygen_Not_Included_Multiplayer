@@ -45,7 +45,8 @@ namespace ONI_Together
 					{
 						public static LocString ENABLE_PACKET_QUEUE = "Enable Packet Queue";
 						public static LocString MAX_PACKETS_PER_SECOND = "Max Packets Per Second";
-					}
+                        public static LocString BYPASS_PROTOCOL_CHECKS = "Bypass Protocol Checks";
+                    }
 
                     public class CURSOR_SETTINGS
                     {
@@ -85,6 +86,7 @@ namespace ONI_Together
                     {
                         public static LocString ENABLE_PACKET_QUEUE = "When enabled, outgoing packets are queued and sent at a limited rate per frame to prevent network saturation.\nWhen disabled, all packets are sent immediately without throttling.";
                         public static LocString MAX_PACKETS_PER_SECOND = "Maximum number of packets to send per second per connection when the packet queue is enabled.\nExcess packets are buffered and sent in subsequent frames.\n\nRanges: (500 - 1000)";
+                        public static LocString BYPASS_PROTOCOL_CHECKS = "Ignores protocol version, packet registry fingerprint, and mod version mismatches during connection handshake.\n\nUse this only for cross-platform testing between Debug and Release builds.";
                     }
 
                     public class CURSOR_SETTINGS
