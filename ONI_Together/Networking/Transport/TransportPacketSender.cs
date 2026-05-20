@@ -6,7 +6,8 @@ namespace ONI_Together.Networking.Transport
 {
     public abstract class TransportPacketSender
     {
-        private readonly Dictionary<object, Queue<(IPacket packet, PacketSendMode sendMode)>> _pendingQueues = new();
+        private readonly Dictionary<object, Queue<(IPacket packet, PacketSendMode sendMode)>> _pendingQueues = new Dictionary<object, Queue<(IPacket packet, PacketSendMode sendMode)>>();
+        private readonly List<object> _emptyConnections = new List<object>();
         public int MaxPacketsPerSecond { get; set; } = 0;   // 0 = unlimited
 
         public bool SendToConnection(object conn, IPacket packet, PacketSendMode sendType = PacketSendMode.ReliableImmediate)
@@ -26,13 +27,11 @@ namespace ONI_Together.Networking.Transport
             if (MaxPacketsPerSecond <= 0)
             {
                 foreach (var kvp in _pendingQueues)
-                {
                     while (kvp.Value.Count > 0)
                     {
                         var (packet, sendType) = kvp.Value.Dequeue();
                         SendPacket(kvp.Key, packet, sendType);
                     }
-                }
                 _pendingQueues.Clear();
                 return;
             }
@@ -41,7 +40,7 @@ namespace ONI_Together.Networking.Transport
             if (maxThisTick < 1) maxThisTick = 1;
 
             // Limited mode, drain up to maxThisTick per connection
-            List<object> empty = null;
+            _emptyConnections.Clear();
             foreach (var kvp in _pendingQueues)
             {
                 int sent = 0;
@@ -52,16 +51,11 @@ namespace ONI_Together.Networking.Transport
                     sent++;
                 }
                 if (kvp.Value.Count == 0)
-                {
-                    empty ??= new List<object>();
-                    empty.Add(kvp.Key);
-                }
+                    _emptyConnections.Add(kvp.Key);
             }
-            if (empty != null)
-            {
-                foreach (var key in empty)
-                    _pendingQueues.Remove(key);
-            }
+
+            foreach (var key in _emptyConnections)
+                _pendingQueues.Remove(key);
         }
 
         public abstract bool SendPacket(object conn, IPacket packet, PacketSendMode sendType = PacketSendMode.ReliableImmediate);
