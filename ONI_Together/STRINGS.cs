@@ -326,7 +326,9 @@ namespace ONI_Together
 				public class HOST
 				{
 					public static LocString STARTINGHOSTING = "Hosting game...";
-				}
+					public static LocString SEND_SAVE_FILE = "Sending save file to a client!\nPlease wait...";
+                }
+
 				public class CLIENT
 				{
 					public static LocString DOWNLOADING_GAME = "Downloading world: {0}%";
