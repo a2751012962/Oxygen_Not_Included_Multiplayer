@@ -16,7 +16,7 @@ namespace ONI_Together.Networking.Transport.Steam
     {
         public SteamworksPacketSender() 
         {
-            MaxPacketsPerSecond = 0;
+            MaxPacketsPerSecond = 500;
         }
 
         public override bool SendPacket(object conn, IPacket packet, PacketSendMode sendType = PacketSendMode.ReliableImmediate)
