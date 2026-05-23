@@ -8,6 +8,7 @@ using UnityEngine;
 using ONI_Together.Networking.Components.StructureStateSyncers;
 using static ONI_Together.STRINGS.UI.MP_OVERLAY;
 using System.Collections.Generic;
+using Shared.Interfaces.Networking;
 
 namespace ONI_Together.Networking.Packets.World
 {
