@@ -20,6 +20,7 @@ using PeterHan.PLib.Core;
 using PeterHan.PLib.Options;
 using ONI_Together.Integrations;
 using System.Linq;
+using System.Threading;
 
 namespace ONI_Together
 {
@@ -35,6 +36,9 @@ namespace ONI_Together
 
 		public static bool UseSteamOverlay = true; // Will be false for non steam instances
 		private static bool _inLogHandler = false;
+
+        public static int MainThreadId { get; private set; }
+        public static SynchronizationContext MainThread { get; private set; }
 
         public override void OnLoad(Harmony harmony)
 		{
@@ -248,7 +252,20 @@ namespace ONI_Together
 #endif
 			// For now default to the steam transport
 			NetworkConfig.UpdateTransport(NetworkConfig.NetworkTransport.STEAMWORKS);
-		}
+
+            MainThreadId = Thread.CurrentThread.ManagedThreadId;
+            MainThread = SynchronizationContext.Current;
+            
+            //Game.Instance.OnSpawnComplete += OnGameSpawnComplete;
+        }
+        
+        private static void OnGameSpawnComplete()
+        {
+	        if (MultiplayerSession.IsHostInSession && MultiplayerSession.SessionHasPlayers)
+	        {
+		        GameServerHardSync.PerformHardSync(false);
+	        }
+        }
 
         public static void InitializeAllIntegrations()
         {
