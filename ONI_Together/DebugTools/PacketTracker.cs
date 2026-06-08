@@ -408,6 +408,7 @@ namespace ONI_Together.DebugTools
             ImGui.Text("Bandwidth history (last 60s)");
             ImGui.Separator();
 
+            // This shit just kinda broke atm
             var top5 = items.Take(5).ToList();
             float totalW = ImGui.GetContentRegionAvail().x;
             float sparkH = 40;
