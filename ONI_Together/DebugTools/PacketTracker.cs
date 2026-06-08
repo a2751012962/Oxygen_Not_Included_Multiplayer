@@ -77,6 +77,10 @@ namespace ONI_Together.DebugTools
         private int _inPage;
         private int _outPage;
 
+        private float _bwSnapshotTimer;
+        private const float BW_SNAPSHOT_INTERVAL = 10f;
+        private Dictionary<string, float[]> _bwSnapshots = new();
+
         public static PacketTracker Init()
         {
             using var _ = Profiler.Scope();
@@ -118,6 +122,14 @@ namespace ONI_Together.DebugTools
         {
             b.History[b.HistoryIdx] = b.WindowBytes;
             b.HistoryIdx = (b.HistoryIdx + 1) % BW_HISTORY_SECONDS;
+            b.WindowBytes = 0;
+            b.WindowCount = 0;
+        }
+
+        private static void ResetHistory(TypeBw b)
+        {
+            Array.Clear(b.History, 0, BW_HISTORY_SECONDS);
+            b.HistoryIdx = 0;
             b.WindowBytes = 0;
             b.WindowCount = 0;
         }
@@ -308,9 +320,10 @@ namespace ONI_Together.DebugTools
             items.Sort((a, b) => -a.TotalBytes.CompareTo(b.TotalBytes));
 
             long grandTotal = items.Sum(i => i.TotalBytes);
-            float curTotalBw = items.Sum(i => AvgRecent(i));
+            float totalRecentBw = items.Sum(i => AvgRecent(i));
+            float totalLifeBw = items.Sum(i => i.TotalBytes) / Mathf.Max(0.1f, Time.realtimeSinceStartup);
 
-            ImGui.Text($"Total: {Utils.FormatBytes((long)curTotalBw)}/s  |  All time: {Utils.FormatBytes(grandTotal)}");
+            ImGui.Text($"Total: {Utils.FormatBytes((long)totalRecentBw)}/s  |  All time: {Utils.FormatBytes(grandTotal)}");
             ImGui.Spacing();
 
             float availW = ImGui.GetContentRegionAvail().x;
@@ -319,27 +332,36 @@ namespace ONI_Together.DebugTools
                 new Vector2(0, 300)))
             {
                 ImGui.TableSetupColumn("Packet Type", ImGuiTableColumnFlags.WidthStretch);
-                ImGui.TableSetupColumn("Share", ImGuiTableColumnFlags.WidthFixed, 44);
+                ImGui.TableSetupColumn("Share", ImGuiTableColumnFlags.WidthFixed, 55);
                 ImGui.TableSetupColumn("Bandwidth", ImGuiTableColumnFlags.WidthFixed, 100);
                 ImGui.TableSetupColumn("Pkts/s", ImGuiTableColumnFlags.WidthFixed, 55);
                 ImGui.TableSetupColumn("Avg Size", ImGuiTableColumnFlags.WidthFixed, 60);
                 ImGui.TableHeadersRow();
 
                 long maxBytes = items[0].TotalBytes;
+                float elapsed = Mathf.Max(0.1f, Time.realtimeSinceStartup);
                 foreach (var item in items)
                 {
-                    float share = grandTotal > 0 ? (float)item.TotalBytes / grandTotal : 0;
                     float curBw = AvgRecent(item);
-                    float curPps = item.TotalCount / Mathf.Max(1f, Time.realtimeSinceStartup);
+                    if (curBw <= 0f)
+                        curBw = item.TotalBytes / elapsed;
+
+                    float share = totalRecentBw > 0
+                        ? AvgRecent(item) / totalRecentBw
+                        : (grandTotal > 0 ? (float)item.TotalBytes / grandTotal : 0);
+
+                    float curPps = item.TotalCount / elapsed;
                     int avgSize = item.TotalCount > 0 ? (int)(item.TotalBytes / item.TotalCount) : 0;
 
                     ImGui.TableNextRow();
+                    var rowMin = ImGui.GetCursorScreenPos();
 
                     ImGui.TableNextColumn();
                     ImGui.Text(item.Name);
 
                     ImGui.TableNextColumn();
-                    ImGui.Text($"{share * 100:F0}%");
+                    float sharePercent = share * 100;
+                    ImGui.Text($"{sharePercent:F1}%");
 
                     ImGui.TableNextColumn();
                     ImGui.Text(Utils.FormatBytes((long)curBw) + "/s");
@@ -354,17 +376,31 @@ namespace ONI_Together.DebugTools
                     if (maxBytes > 0)
                     {
                         var dl = ImGui.GetWindowDrawList();
-                        var min = ImGui.GetItemRectMin();
-                        var max = ImGui.GetItemRectMax();
+                        var rowMax = ImGui.GetItemRectMax();
                         float barW = (float)item.TotalBytes / maxBytes * (availW - 10);
                         uint col = ImGui.GetColorU32(new Vector4(0.3f, 0.6f, 1f, 0.25f));
                         dl.AddRectFilled(
-                            new Vector2(min.x - 4, min.y),
-                            new Vector2(min.x - 4 + barW, max.y),
+                            new Vector2(rowMin.x, rowMin.y),
+                            new Vector2(rowMin.x + barW, rowMax.y),
                             col);
                     }
                 }
                 ImGui.EndTable();
+            }
+
+            // Capture display snapshots periodically (don't touch live History)
+            _bwSnapshotTimer += ImGui.GetIO().DeltaTime;
+            if (_bwSnapshotTimer >= BW_SNAPSHOT_INTERVAL)
+            {
+                _bwSnapshotTimer = 0f;
+                _bwSnapshots.Clear();
+                float[] snap = new float[BW_HISTORY_SECONDS];
+                foreach (var item in items)
+                {
+                    for (int i = 0; i < BW_HISTORY_SECONDS; i++)
+                        snap[i] = item.History[(item.HistoryIdx + i) % BW_HISTORY_SECONDS];
+                    _bwSnapshots[item.Name] = (float[])snap.Clone();
+                }
             }
 
             // Mini bandwidth-over-time sparklines for top 5
@@ -376,47 +412,31 @@ namespace ONI_Together.DebugTools
             float totalW = ImGui.GetContentRegionAvail().x;
             float sparkH = 40;
 
+            float[] chrono = new float[BW_HISTORY_SECONDS];
             foreach (var item in top5)
             {
-                var col = ImGui.GetColorU32(new Vector4(0.4f, 0.7f, 1f, 0.8f));
-
-                var pos = ImGui.GetCursorScreenPos();
-                var size = new Vector2(totalW, sparkH);
-                ImGui.Dummy(size);
-
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip($"{item.Name}: {Utils.FormatBytes((long)AvgRecent(item))}/s");
-
-                float peak = 1;
-                for (int i = 0; i < BW_HISTORY_SECONDS; i++)
+                float[] src;
+                if (!_bwSnapshots.TryGetValue(item.Name, out src))
                 {
-                    float v = item.History[(item.HistoryIdx - 1 - i + BW_HISTORY_SECONDS) % BW_HISTORY_SECONDS];
-                    if (v > peak) peak = v;
+                    for (int i = 0; i < BW_HISTORY_SECONDS; i++)
+                        chrono[i] = item.History[(item.HistoryIdx + i) % BW_HISTORY_SECONDS];
+                    src = chrono;
                 }
 
-                var dl = ImGui.GetWindowDrawList();
-                float prevX = pos.x;
-                float prevY = pos.y + sparkH;
-                float sum = 0;
+                float peak = 0f, sum = 0;
                 for (int i = 0; i < BW_HISTORY_SECONDS; i++)
                 {
-                    float v = item.History[(item.HistoryIdx - 1 - i + BW_HISTORY_SECONDS) % BW_HISTORY_SECONDS];
-                    float x = pos.x + totalW - (i / (float)(BW_HISTORY_SECONDS - 1)) * totalW;
-                    float y = pos.y + sparkH - (v / peak) * sparkH;
-                    dl.AddLine(new Vector2(prevX, prevY), new Vector2(x, y), col, 1.5f);
-                    prevX = x;
-                    prevY = y;
-                    sum += v;
+                    if (src[i] > peak) peak = src[i];
+                    sum += src[i];
                 }
-
-                // Legend text beside sparkline
                 float avg = sum / BW_HISTORY_SECONDS;
-                var textPos = new Vector2(pos.x + 4, pos.y + 2);
-                dl.AddText(textPos, ImGui.GetColorU32(new Vector4(1, 1, 1, 1)),
-                    $"{item.Name}");
-                dl.AddText(new Vector2(pos.x + 4, pos.y + sparkH - 14),
-                    ImGui.GetColorU32(new Vector4(0.7f, 0.7f, 0.7f, 1f)),
-                    $"{Utils.FormatBytes((long)avg)}/s  peak: {Utils.FormatBytes((long)peak)}/s");
+                float scaleMax = Mathf.Max(peak * 1.1f, 1f);
+
+                string overlay = $"{Utils.FormatBytes((long)avg)}/s  pk: {Utils.FormatBytes((long)peak)}/s";
+                ImGui.PlotLines($"##bw_{item.Name}", ref src[0], BW_HISTORY_SECONDS, 0,
+                    overlay, 0f, scaleMax, new Vector2(totalW, sparkH));
+                ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f),
+                    $"{item.Name}  -  {overlay}");
             }
         }
 
@@ -567,15 +587,13 @@ namespace ONI_Together.DebugTools
                 ImGui.SameLine();
                 if (ImGui.Button("Next >") && page < totalPages - 1)
                     page++;
-
-                if (page != totalPages - 1)
-                {
-                    ImGui.SameLine();
-                    if (ImGui.SmallButton("Latest"))
-                        page = 0;
-                    if (ImGui.SmallButton("Oldest"))
-                        page = totalPages - 1;
-                }
+                
+                ImGui.SameLine();
+                if (ImGui.SmallButton("Latest"))
+                    page = 0;
+                ImGui.SameLine();
+                if (ImGui.SmallButton("Oldest"))
+                    page = totalPages - 1;
             }
         }
 
