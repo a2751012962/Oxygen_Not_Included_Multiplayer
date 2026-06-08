@@ -7,7 +7,7 @@ using UnityEngine;
 namespace ONI_Together.Misc
 {
     /// <summary>
-    /// A type-safe tagged union that holds one value of multiple possible types (Float, Int, Byte, String, Boolean) at a time,
+    /// A type-safe tagged union that holds one value of multiple possible types (Float, Int, Byte, String, Boolean, Vector3, Vector2) at a time,
     /// identified by a discriminator (Type). Eliminates unsafe type punning and boxing by storing the actual typed value
     /// with self-describing serialization via BinaryWriter/BinaryReader.
     /// </summary>

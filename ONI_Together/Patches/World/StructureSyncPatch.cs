@@ -94,4 +94,14 @@ namespace ONI_Together.Patches.World
             __instance.gameObject.AddOrGet<ToiletSyncer>();
         }
     }
+    
+    [HarmonyPatch(typeof(Reactor), nameof(Reactor.OnSpawn))]
+    public static class ReactorSpawnPatch
+    {
+        public static void Postfix(Reactor __instance)
+        {
+            using var _ = Profiler.Scope();
+            __instance.gameObject.AddOrGet<ReactorStateSyncer>();
+        }
+    }
 }
