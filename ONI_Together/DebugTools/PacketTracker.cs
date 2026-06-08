@@ -361,7 +361,7 @@ namespace ONI_Together.DebugTools
 
                     ImGui.TableNextColumn();
                     float sharePercent = share * 100;
-                    ImGui.Text($"{sharePercent:F1}%");
+                    ImGui.Text($"{sharePercent:F1}%"); // Why tf are you displaying gibberish
 
                     ImGui.TableNextColumn();
                     ImGui.Text(Utils.FormatBytes((long)curBw) + "/s");
@@ -526,6 +526,32 @@ namespace ONI_Together.DebugTools
         private void DrawTable(string id, PacketTrackData[] buf, int head, int count, string filter, ref int page)
         {
             bool hasFilter = !string.IsNullOrEmpty(filter);
+            List<int> matchedIndices = null;
+            int visibleCount;
+
+            if (hasFilter)
+            {
+                matchedIndices = new List<int>(Math.Min(count, 256));
+                for (int i = 0; i < count; i++)
+                {
+                    var entry = BufferGet(buf, head, count, i);
+                    string typeName = entry.packet.GetType().Name;
+                    string idStr = entry.packet.GetType().GetHashCode().ToString();
+                    if (typeName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0
+                        || idStr.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        matchedIndices.Add(i);
+                    }
+                }
+                visibleCount = matchedIndices.Count;
+            }
+            else
+            {
+                visibleCount = count;
+            }
+
+            int totalPages = Math.Max(1, (visibleCount + _pageSize - 1) / _pageSize);
+            page = Math.Clamp(page, 0, totalPages - 1);
 
             if (ImGui.BeginTable(id, 4,
                 ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY,
@@ -537,57 +563,30 @@ namespace ONI_Together.DebugTools
                 ImGui.TableSetupColumn("Age", ImGuiTableColumnFlags.WidthFixed, 50);
                 ImGui.TableHeadersRow();
 
-                if (hasFilter)
-                {
-                    int shown = 0;
-                    for (int i = 0; i < count; i++)
-                    {
-                        var entry = BufferGet(buf, head, count, i);
-                        string typeName = entry.packet.GetType().Name;
-                        string idStr = entry.packet.GetType().GetHashCode().ToString();
-                        if (typeName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0
-                            || idStr.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            DrawRow(entry, count - i);
-                            shown++;
-                        }
-                    }
-                    ImGui.TableNextRow();
-                    ImGui.TableNextColumn();
-                    ImGui.TextDisabled($"{shown} filtered entries");
-                }
-                else
-                {
-                    int totalPages = Math.Max(1, (count + _pageSize - 1) / _pageSize);
-                    page = Math.Clamp(page, 0, totalPages - 1);
+                int startIdx = page * _pageSize;
+                int endIdx = Math.Min(startIdx + _pageSize, visibleCount);
 
-                    int startIdx = page * _pageSize;
-                    int endIdx = Math.Min(startIdx + _pageSize, count);
-
-                    for (int i = startIdx; i < endIdx; i++)
-                    {
-                        var entry = BufferGet(buf, head, count, i);
-                        DrawRow(entry, count - i);
-                    }
+                for (int idx = startIdx; idx < endIdx; idx++)
+                {
+                    int i = hasFilter ? matchedIndices[idx] : idx;
+                    var entry = BufferGet(buf, head, count, i);
+                    DrawRow(entry, count - i);
                 }
 
                 ImGui.EndTable();
             }
 
             // Page navigation
-            if (!hasFilter && count > _pageSize)
+            if (visibleCount > _pageSize)
             {
-                int totalPages = Math.Max(1, (count + _pageSize - 1) / _pageSize);
-                page = Math.Clamp(page, 0, totalPages - 1);
-
                 if (ImGui.Button("< Prev") && page > 0)
                     page--;
                 ImGui.SameLine();
-                ImGui.Text($"  Page {page + 1}/{totalPages}  ({Math.Min(_pageSize, count - page * _pageSize)} entries)  ");
+                ImGui.Text($"  Page {page + 1}/{totalPages}  ({Math.Min(_pageSize, visibleCount - page * _pageSize)} entries)  ");
                 ImGui.SameLine();
                 if (ImGui.Button("Next >") && page < totalPages - 1)
                     page++;
-                
+
                 ImGui.SameLine();
                 if (ImGui.SmallButton("Latest"))
                     page = 0;
