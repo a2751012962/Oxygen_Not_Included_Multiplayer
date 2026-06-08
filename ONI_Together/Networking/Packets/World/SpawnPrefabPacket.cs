@@ -10,6 +10,7 @@ public class SpawnPrefabPacket : IPacket
     public int NetId;
     public int Hash;
     public Vector3 Position;
+    public bool IsActive = true;
 
     public bool HasElementData = false;
     public float Mass;
@@ -35,13 +36,14 @@ public class SpawnPrefabPacket : IPacket
         Temperature = temperature;
         DiseaseIndex = diseaseIndex;
         DiseaseCount = diseaseCount;
-    } 
+    }
     
     public void Serialize(BinaryWriter writer)
     {
         writer.Write(NetId);
         writer.Write(Hash);
         writer.Write(Position);
+        writer.Write(IsActive);
         writer.Write(HasElementData);
         if (!HasElementData) return;
         
@@ -56,6 +58,7 @@ public class SpawnPrefabPacket : IPacket
         NetId = reader.ReadInt32();
         Hash = reader.ReadInt32();
         Position = reader.ReadVector3();
+        IsActive = reader.ReadBoolean();
         HasElementData = reader.ReadBoolean();
         if (!HasElementData) return;
         
@@ -81,7 +84,7 @@ public class SpawnPrefabPacket : IPacket
             var prefab = Assets.GetPrefab(new Tag(Hash));
             if (prefab == null) return;
             go = Util.KInstantiate(prefab, Position);
-            go.SetActive(true);
+            go.SetActive(IsActive);
         }
         
         go.AddOrGet<NetworkIdentity>().OverrideNetId(NetId);

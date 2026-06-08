@@ -23,7 +23,7 @@ public static class SpawnUtils
     /// <param name="tag">The prefab tag to spawn.</param>
     /// <param name="position">World position for the new GameObject.</param>
     /// <returns>The spawned GameObject on the host, or <c>null</c> if not host or prefab not found.</returns>
-    public static GameObject KNetInstantiate(Tag tag, Vector3 position)
+    public static GameObject KNetInstantiate(Tag tag, Vector3 position, bool isActive = true)
     {
         if (!MultiplayerSession.IsHost) return null;
         
@@ -31,10 +31,11 @@ public static class SpawnUtils
         if (prefab == null) return null;
         
         var go = Util.KInstantiate(prefab, position);
-        go.SetActive(true);
+        go.SetActive(isActive);
         var identity = AssignIdentity(go);
 
         SpawnPrefabPacket packet = new SpawnPrefabPacket(identity.NetId, tag.hash, position);
+        packet.IsActive = isActive;
         PacketSender.SendToAllClients(packet);
         return go;
     }
