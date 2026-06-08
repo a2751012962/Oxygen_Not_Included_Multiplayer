@@ -46,10 +46,10 @@ public static class SpawnUtils
     /// Uses <c>element.substance.SpawnResource</c> under the hood so temperature, mass, and disease
     /// data are preserved identically on both sides.
     /// </summary>
-    /// <param name="elementHash">The <see cref="SimHashes"/> value of the element (cast to <c>int</c>). Use <c>(int)element.id</c> or <c>element.tag.GUID</c>.</param>
+    /// <param name="elementHash">The <see cref="SimHashes"/> value of the element (cast to <c>int</c>). Use <c>(int)element.id</c>.</param>
     /// <param name="position">World position for the new resource.</param>
     /// <param name="mass">Mass of the resource in kg.</param>
-    /// <param name="temperature">Temperature of the resource in Kelvin.</param>
+    /// <param name="temperature">Temperature of the resource.</param>
     /// <param name="diseaseIdx">Disease index (0 = no disease).</param>
     /// <param name="diseaseCount">Disease germ count.</param>
     /// <returns>The spawned GameObject on the host, or <c>null</c> if not host or element not found.</returns>
