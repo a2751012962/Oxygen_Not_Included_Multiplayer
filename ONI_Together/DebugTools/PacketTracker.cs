@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
@@ -9,12 +10,14 @@ using ONI_Together.Networking;
 using ONI_Together.Networking.Packets.Architecture;
 using Shared.Profiling;
 using Steamworks;
+using UnityEngine;
 
 namespace ONI_Together.DebugTools
 {
     public class PacketTracker
     {
         private static PacketTracker _instance;
+        public int _nextTrackId;
         private bool showWindow = false;
 
         private string outgoing_filter = string.Empty;
@@ -25,6 +28,7 @@ namespace ONI_Together.DebugTools
         {
             public IPacket packet;
             public int size;
+            public int TrackId;
         }
 
         private List<PacketTrackData> incoming_tracked = new List<PacketTrackData>();
@@ -36,6 +40,15 @@ namespace ONI_Together.DebugTools
         private float incoming_pps;
         private float outgoing_pps;
         private float last_pps_time;
+
+        private class InspectWindowState
+        {
+            public int Id;
+            public PacketTrackData Data;
+            public bool Open = true;
+        }
+        private List<InspectWindowState> _inspectWindows = new();
+        private int _nextWindowId;
 
         public static PacketTracker Init()
         {
@@ -52,6 +65,7 @@ namespace ONI_Together.DebugTools
         {
             using var _ = Profiler.Scope();
 
+            data.TrackId = _instance._nextTrackId++;
             _instance.outgoing_tracked.Add(data);
             _instance.outgoing_count++;
 
@@ -67,6 +81,7 @@ namespace ONI_Together.DebugTools
         {
             using var _ = Profiler.Scope();
 
+            data.TrackId = _instance._nextTrackId++;
             _instance.incoming_tracked.Add(data);
             _instance.incoming_count++;
 
@@ -87,6 +102,7 @@ namespace ONI_Together.DebugTools
             _instance.incoming_count = 0;
             _instance.incoming_pps = 0;
             _instance.outgoing_pps = 0;
+            _instance._inspectWindows.Clear();
         }
 
         private void CalculatePPS()
@@ -146,6 +162,8 @@ namespace ONI_Together.DebugTools
 
                         AddTable("outgoing_packets_table", outgoing_tracked, outgoing_filter);
                     }
+
+                    DrawInspectWindows();
                 }
             }
 
@@ -194,6 +212,93 @@ namespace ONI_Together.DebugTools
                     outgoing_filter
                 );
             }
+
+            DrawInspectWindows();
+        }
+
+        private void OpenInspectWindow(PacketTrackData data)
+        {
+            _inspectWindows.RemoveAll(w => !w.Open);
+            _inspectWindows.Add(new InspectWindowState
+            {
+                Id = _nextWindowId++,
+                Data = data,
+                Open = true
+            });
+        }
+
+        private void DrawInspectWindows()
+        {
+            _inspectWindows.RemoveAll(w => !w.Open);
+            foreach (var win in _inspectWindows)
+            {
+                if (!win.Open) continue;
+
+                var data = win.Data;
+                if (data.packet == null) { win.Open = false; continue; }
+
+                var type = data.packet.GetType();
+                string title = $"{type.Name}##inspect_{win.Id}";
+
+                if (ImGui.Begin(title, ref win.Open))
+                {
+                    ImGui.TextDisabled($"Track ID: {data.TrackId}  |  Size: {Utils.FormatBytes(data.size)}");
+                    ImGui.Separator();
+
+                    var ifaces = type.GetInterfaces()
+                        .Where(i => i != typeof(IPacket))
+                        .Select(i => i.Name)
+                        .ToList();
+                    if (ifaces.Count > 0)
+                        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f),
+                            $"Implements: {string.Join(", ", ifaces)}");
+                    ImGui.Spacing();
+
+                    if (ImGui.BeginTable("pf", 4,
+                        ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY))
+                    {
+                        ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100);
+                        ImGui.TableSetupColumn("Size", ImGuiTableColumnFlags.WidthFixed, 50);
+                        ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableHeadersRow();
+
+                        var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                            .OrderBy(f => f.Name)
+                            .ToList();
+
+                        if (fields.Count == 0)
+                        {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.TextDisabled("(no public instance fields)");
+                        }
+
+                        foreach (var field in fields)
+                        {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.Text(field.Name);
+                            ImGui.TableNextColumn();
+                            ImGui.Text(GetFriendlyTypeName(field.FieldType));
+                            ImGui.TableNextColumn();
+                            ImGui.Text(GetFieldSizeHint(field.FieldType));
+                            ImGui.TableNextColumn();
+                            try
+                            {
+                                ImGui.Text(FormatFieldValue(field.GetValue(data.packet), field.FieldType));
+                            }
+                            catch
+                            {
+                                ImGui.TextDisabled("?");
+                            }
+                        }
+
+                        ImGui.EndTable();
+                    }
+                }
+                ImGui.End();
+            }
         }
 
         private void AddTable(string str_id, List<PacketTrackData> dataset, string filter)
@@ -201,9 +306,9 @@ namespace ONI_Together.DebugTools
             using var _ = Profiler.Scope();
 
             if (ImGui.BeginTable(str_id, 3,
-                        ImGuiTableFlags.Borders |
-                        ImGuiTableFlags.RowBg |
-                        ImGuiTableFlags.ScrollY, new UnityEngine.Vector2(0, 400)))
+                    ImGuiTableFlags.Borders |
+                    ImGuiTableFlags.RowBg |
+                    ImGuiTableFlags.ScrollY, new Vector2(0, 400)))
             {
                 ImGui.TableSetupColumn("Packet Type");
                 ImGui.TableSetupColumn("Packet ID");
@@ -222,23 +327,26 @@ namespace ONI_Together.DebugTools
                     {
                         bool matchesType =
                             typeName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
-
                         bool matchesId =
                             idString.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
-
                         if (!matchesType && !matchesId)
                             continue;
                     }
 
                     ImGui.TableNextRow();
 
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.Text(typeName);
+                    ImGui.TableNextColumn();
+                    ImGui.PushID(entry.TrackId);
+                    if (ImGui.Selectable(typeName, false, ImGuiSelectableFlags.SpanAllColumns))
+                    {
+                        OpenInspectWindow(entry);
+                    }
+                    ImGui.PopID();
 
-                    ImGui.TableSetColumnIndex(1);
+                    ImGui.TableNextColumn();
                     ImGui.Text(idString);
 
-                    ImGui.TableSetColumnIndex(2);
+                    ImGui.TableNextColumn();
                     ImGui.Text(Utils.FormatBytes(entry.size));
                 }
 
@@ -246,5 +354,74 @@ namespace ONI_Together.DebugTools
             }
         }
 
+        private static string GetFriendlyTypeName(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                var name = type.GetGenericTypeDefinition().Name;
+                name = name.Substring(0, name.IndexOf('`'));
+                var args = string.Join(", ", type.GetGenericArguments().Select(GetFriendlyTypeName));
+                return $"{name}<{args}>";
+            }
+            if (type.IsEnum) return "enum";
+            return type.Name;
+        }
+
+        private static string GetFieldSizeHint(Type type)
+        {
+            if (type == typeof(bool) || type == typeof(byte) || type == typeof(sbyte)) return "1";
+            if (type == typeof(short) || type == typeof(ushort))                   return "2";
+            if (type == typeof(int) || type == typeof(uint) || type == typeof(float)) return "4";
+            if (type == typeof(long) || type == typeof(ulong) || type == typeof(double)) return "8";
+            if (type == typeof(Vector2))  return "8";
+            if (type == typeof(Vector3))  return "12";
+            if (type == typeof(Vector4) || type == typeof(Quaternion)) return "16";
+            if (type == typeof(Color))    return "16";
+            if (type == typeof(string))   return "~";
+            if (type.IsEnum) return GetFieldSizeHint(Enum.GetUnderlyingType(type));
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>)) return "~";
+            if (type.IsArray)  return "~";
+            if (!type.IsValueType) return "~";
+            return "?";
+        }
+
+        private static string FormatFieldValue(object val, Type type)
+        {
+            if (val == null) return "null";
+            if (type == typeof(Vector3))
+            {
+                var v = (Vector3)val;
+                return $"({v.x:F3}, {v.y:F3}, {v.z:F3})";
+            }
+            if (type == typeof(Vector2))
+            {
+                var v = (Vector2)val;
+                return $"({v.x:F3}, {v.y:F3})";
+            }
+            if (type == typeof(Color))
+            {
+                var c = (Color)val;
+                return $"({c.r:F2}, {c.g:F2}, {c.b:F2}, {c.a:F2})";
+            }
+            if (type == typeof(string))
+            {
+                var s = (string)val;
+                if (string.IsNullOrEmpty(s)) return "\"\"";
+                if (s.Length > 60) return $"\"{s.Substring(0, 60)}...\"";
+                return $"\"{s}\"";
+            }
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                var list = (System.Collections.IList)val;
+                return $"[Count: {list?.Count ?? 0}]";
+            }
+            if (type.IsArray)
+            {
+                var arr = (Array)val;
+                return $"[Length: {arr?.Length ?? 0}]";
+            }
+            if (type.IsEnum) return $"{val}";
+            return val.ToString() ?? "";
+        }
     }
 }
