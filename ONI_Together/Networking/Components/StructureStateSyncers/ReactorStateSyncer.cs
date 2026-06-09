@@ -27,7 +27,7 @@ public class ReactorStateSyncer : StructureSyncerBase
         checkOptionalsValuesForChanges = false;
     }
 
-    protected override void SampleState(out Variant value, out bool active, out List<Variant> optionalValues)
+    protected override void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues)
     {
         float fuelTemp = reactor.FuelTemperature;
         value = fuelTemp >= 0f ? fuelTemp : 0f;
@@ -39,73 +39,42 @@ public class ReactorStateSyncer : StructureSyncerBase
         else if (smi.IsInsideState(sm.meltdown)) majorState = 2;
         else if (smi.IsInsideState(sm.on)) majorState = 1;
 
-        optionalValues = new List<Variant>();
-        optionalValues.Add(majorState);
-        optionalValues.Add(sm.reactionUnderway.Get(smi));
-        optionalValues.Add(sm.meltingDown.Get(smi));
-        optionalValues.Add(sm.melted.Get(smi));
-        optionalValues.Add(sm.meltdownMassRemaining.Get(smi));
-        optionalValues.Add(sm.timeSinceMeltdown.Get(smi));
-        optionalValues.Add(sm.canVent.Get(smi));
-        optionalValues.Add(reactor.spentFuel);
-        optionalValues.Add(reactor.numCyclesRunning);
-        optionalValues.Add(reactor.fuelDeliveryEnabled);
-        optionalValues.Add(reactor.timeSinceMeltdownEmit);
-        optionalValues.Add(reactor.radEmitter.emitRads);
+        optionalValues = new Dictionary<string, Variant>();
+        optionalValues["major_state"] = majorState;
+        optionalValues["reaction_underway"] = sm.reactionUnderway.Get(smi);
+        optionalValues["melting_down"] = sm.meltingDown.Get(smi);
+        optionalValues["melted"] = sm.melted.Get(smi);
+        optionalValues["meltdown_mass_remaining"] = sm.meltdownMassRemaining.Get(smi);
+        optionalValues["time_since_meltdown"] = sm.timeSinceMeltdown.Get(smi);
+        optionalValues["can_vent"] = sm.canVent.Get(smi);
+        optionalValues["spent_fuel"] = reactor.spentFuel;
+        optionalValues["num_cycles_running"] = reactor.numCyclesRunning;
+        optionalValues["fuel_delivery_enabled"] = reactor.fuelDeliveryEnabled;
+        optionalValues["time_since_meltdown_emit"] = reactor.timeSinceMeltdownEmit;
+        optionalValues["emit_rads"] = reactor.radEmitter.emitRads;
         
         PrimaryElement storedCoolant = smi.master.GetStoredCoolant();
         float waterMeterPercent = 0f;
         if (storedCoolant)
             waterMeterPercent = storedCoolant.Mass / 90f;
         
-        optionalValues.Add(waterMeterPercent);
+        optionalValues["water_meter_percent"] = waterMeterPercent;
         
         PrimaryElement activeFuel = smi.master.GetActiveFuel();
         float temperaturePercent = 0f;
         if (activeFuel != null)
             temperaturePercent = Mathf.Clamp01(activeFuel.Temperature / 3000f) / Reactor.meterFrameScaleHack;
         
-        optionalValues.Add(temperaturePercent);
+        optionalValues["temperature_meter_percent"] = temperaturePercent;
         
-        int supplyCount = 0, reactionCount = 0, wasteCount = 0;
         if (supplyStorage)
-        {
-            var encoded = new List<Variant>();
-            BuildingUtils.EncodeStorageContents(supplyStorage, out encoded);
-            supplyCount = encoded.Count;
-            optionalValues.Add(supplyCount);
-            optionalValues.AddRange(encoded);
-        }
-        else
-        {
-            optionalValues.Add(0);
-        }
-
+            BuildingUtils.EncodeStorageContents(supplyStorage, optionalValues, "supply_");
+        
         if (reactionStorage)
-        {
-            var encoded = new List<Variant>();
-            BuildingUtils.EncodeStorageContents(reactionStorage, out encoded);
-            reactionCount = encoded.Count;
-            optionalValues.Add(reactionCount);
-            optionalValues.AddRange(encoded); 
-        }
-        else
-        {
-            optionalValues.Add(0);
-        }
+            BuildingUtils.EncodeStorageContents(reactionStorage, optionalValues, "reaction_");
         
         if (wasteStorage != null)
-        {
-            var encoded = new List<Variant>();
-            BuildingUtils.EncodeStorageContents(wasteStorage, out encoded);
-            wasteCount = encoded.Count;
-            optionalValues.Add(wasteCount);
-            optionalValues.AddRange(encoded);
-        }
-        else
-        {
-            optionalValues.Add(0);
-        }
+            BuildingUtils.EncodeStorageContents(wasteStorage, optionalValues, "waste_");
         
         lastFuelTemp = fuelTemp;
         lastMajorState = majorState;
@@ -116,35 +85,41 @@ public class ReactorStateSyncer : StructureSyncerBase
         if (reactor == null || smi == null) return;
 
             var opt = packet.OptionalValues;
-            int idx = 0;
 
-            int targetState = opt[idx++].Int;
-            bool reactionUnderway = opt[idx++].Boolean;
-            bool meltingDown = opt[idx++].Boolean;
-            bool melted = opt[idx++].Boolean;
-            float meltdownMassRemaining = opt[idx++].Float;
-            float timeSinceMeltdown = opt[idx++].Float;
-            bool canVent = opt[idx++].Boolean;
+            opt.TryGetValue("major_state", out var majorStateVal);
+            opt.TryGetValue("reaction_underway", out var reactionUnderwayVal);
+            opt.TryGetValue("melting_down", out var meltingDownVal);
+            opt.TryGetValue("melted", out var meltedVal);
+            opt.TryGetValue("meltdown_mass_remaining", out var meltdownMassVal);
+            opt.TryGetValue("time_since_meltdown", out var timeSinceMeltdownVal);
+            opt.TryGetValue("can_vent", out var canVentVal);
+            opt.TryGetValue("spent_fuel", out var spentFuelVal);
+            opt.TryGetValue("num_cycles_running", out var numCyclesVal);
+            opt.TryGetValue("fuel_delivery_enabled", out var fuelDeliveryVal);
+            opt.TryGetValue("time_since_meltdown_emit", out var timeSinceEmitVal);
+            opt.TryGetValue("emit_rads", out var emitRadsVal);
+            opt.TryGetValue("water_meter_percent", out var waterMeterVal);
+            opt.TryGetValue("temperature_meter_percent", out var tempMeterVal);
 
-            float spentFuel = opt[idx++].Float;
-            int numCyclesRunning = opt[idx++].Int;
-            bool fuelDeliveryEnabled = opt[idx++].Boolean;
-            float timeSinceMeltdownEmit = opt[idx++].Float;
-            float rads = opt[idx++].Float;
-            float waterMeterPos = opt[idx++].Float;
-            float tempMeterPos = opt[idx++].Float;
+            int targetState = majorStateVal.Int;
+            bool reactionUnderway = reactionUnderwayVal.Boolean;
+            bool meltingDown = meltingDownVal.Boolean;
+            bool melted = meltedVal.Boolean;
+            float meltdownMassRemaining = meltdownMassVal.Float;
+            float timeSinceMeltdown = timeSinceMeltdownVal.Float;
+            bool canVent = canVentVal.Boolean;
+            float spentFuel = spentFuelVal.Float;
+            int numCyclesRunning = numCyclesVal.Int;
+            bool fuelDeliveryEnabled = fuelDeliveryVal.Boolean;
+            float timeSinceMeltdownEmit = timeSinceEmitVal.Float;
+            float rads = emitRadsVal.Float;
+            float waterMeterPos = waterMeterVal.Float;
+            float tempMeterPos = tempMeterVal.Float;
 
-            int supplyCount = opt[idx++].Int;
-            var supplyData = opt.GetRange(idx, supplyCount);
-            idx += supplyCount;
-            if (supplyCount >= 2) BuildingUtils.RebuildStorageFromData(supplyStorage, supplyData);
-
-            int reactionCount = opt[idx++].Int;
-            var reactionData = opt.GetRange(idx, reactionCount);
-            idx += reactionCount;
-            if (reactionCount >= 2)
+            BuildingUtils.RebuildStorageFromData(supplyStorage, opt, "supply_");
+            BuildingUtils.RebuildStorageFromData(reactionStorage, opt, "reaction_");
+            if (opt.ContainsKey("reaction_capacityKg"))
             {
-                BuildingUtils.RebuildStorageFromData(reactionStorage, reactionData);
                 var fuel = reactionStorage.FindFirst(SimHashes.EnrichedUranium.CreateTag());
                 if (fuel != null)
                 {
@@ -152,10 +127,7 @@ public class ReactorStateSyncer : StructureSyncerBase
                     if (pe != null) pe.Temperature = packet.Value.Float;
                 }
             }
-
-            int wasteCount = opt[idx++].Int;
-            var wasteData = opt.GetRange(idx, wasteCount);
-            if (wasteCount >= 2) BuildingUtils.RebuildStorageFromData(wasteStorage, wasteData);
+            BuildingUtils.RebuildStorageFromData(wasteStorage, opt, "waste_");
 
             var sm = smi.sm;
             sm.reactionUnderway.Set(reactionUnderway, smi);

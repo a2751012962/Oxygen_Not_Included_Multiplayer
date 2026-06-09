@@ -30,16 +30,17 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
         }
 
 
-        protected override void SampleState(out Variant value, out bool active, out List<Variant> optionalValues)
+        protected override void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues)
         {
             value = storage?.MassStored() ?? 0f;
             active = false;
-            BuildingUtils.EncodeStorageContents(storage, out optionalValues);
+            optionalValues = new Dictionary<string, Variant>();
+            BuildingUtils.EncodeStorageContents(storage, optionalValues);
         }
 
         protected override void ApplyState(StructureStatePacket packet)
         {
-            if (storage == null || packet.OptionalValues.Count < 2) return;
+            if (storage == null || packet.OptionalValues.Count < 1) return;
             BuildingUtils.RebuildStorageFromData(storage, packet.OptionalValues);
         }
 

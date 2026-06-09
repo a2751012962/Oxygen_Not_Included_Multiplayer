@@ -17,7 +17,7 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
         protected int cell;
         protected Variant lastSentValue;
         protected bool lastSentActive;
-        protected List<Variant> lastOptionalValues;
+        protected Dictionary<string, Variant> lastOptionalValues;
         protected bool checkOptionalsValuesForChanges = true; // bypass optional values check
 
         private bool _initialized;
@@ -91,7 +91,7 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
             }
         }
 
-        protected abstract void SampleState(out Variant value, out bool active, out List<Variant> optionalValues);
+        protected abstract void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues);
         protected abstract void ApplyState(StructureStatePacket packet);
 
         protected abstract bool ShouldForceSync();

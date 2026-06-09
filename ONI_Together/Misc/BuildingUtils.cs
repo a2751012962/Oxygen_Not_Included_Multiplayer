@@ -29,7 +29,7 @@ namespace ONI_Together.Misc
             return false;
         }
 
-        public static void EncodeStorageContents(Storage storage, out List<Variant> optionalValues)
+        public static void EncodeStorageContents(Storage storage, Dictionary<string, Variant> optionalValues, string keyPrefix = "")
         {
             var items = new List<StorageData>();
             for (int i = 0; i < storage.items.Count; i++)
@@ -51,38 +51,40 @@ namespace ONI_Together.Misc
                 });
             }
 
-            optionalValues = new List<Variant>(2 + items.Count * 6);
-            optionalValues.Add(storage.capacityKg);
-            optionalValues.Add(items.Count);
-            foreach (var item in items)
+            optionalValues[keyPrefix + "capacityKg"] = storage.capacityKg;
+            optionalValues[keyPrefix + "item_count"] = items.Count;
+            for (int i = 0; i < items.Count; i++)
             {
-                optionalValues.Add(item.PrefabTagHash);
-                optionalValues.Add(item.Mass);
-                optionalValues.Add(item.Units);
-                optionalValues.Add(item.Temperature);
-                optionalValues.Add(item.DiseaseIdx);
-                optionalValues.Add(item.DiseaseCount);
+                var item = items[i];
+                optionalValues[keyPrefix + "item_" + i + "_hash"] = item.PrefabTagHash;
+                optionalValues[keyPrefix + "item_" + i + "_mass"] = item.Mass;
+                optionalValues[keyPrefix + "item_" + i + "_units"] = item.Units;
+                optionalValues[keyPrefix + "item_" + i + "_temperature"] = item.Temperature;
+                optionalValues[keyPrefix + "item_" + i + "_diseaseIdx"] = item.DiseaseIdx;
+                optionalValues[keyPrefix + "item_" + i + "_diseaseCount"] = item.DiseaseCount;
             }
         }
 
-        public static void RebuildStorageFromData(Storage storage, List<Variant> data, string diseaseReason = "Multiplayer Sync")
+        public static void RebuildStorageFromData(Storage storage, Dictionary<string, Variant> data, string keyPrefix = "", string diseaseReason = "Multiplayer Sync")
         {
-            if (storage == null || data.Count < 2) return;
+            if (storage == null) return;
+            if (!data.TryGetValue(keyPrefix + "capacityKg", out _) || !data.TryGetValue(keyPrefix + "item_count", out var countVar)) return;
+
             ClearStorage(storage);
 
-            int count = data[1].Int;
+            int count = countVar.Int;
             if (count == 0) return;
 
             for (int i = 0; i < count; i++)
             {
-                int baseIdx = 2 + i * 6;
-                if (baseIdx + 6 > data.Count) break;
+                string baseKey = keyPrefix + "item_" + i;
+                if (!data.TryGetValue(baseKey + "_hash", out var hashVar)) break;
 
-                int hash = data[baseIdx].Int;
-                float mass = data[baseIdx + 1].Float;
-                float temperature = data[baseIdx + 3].Float;
-                byte diseaseIdx = data[baseIdx + 4].Byte;
-                int diseaseCount = data[baseIdx + 5].Int;
+                int hash = hashVar.Int;
+                float mass = data[baseKey + "_mass"].Float;
+                float temperature = data[baseKey + "_temperature"].Float;
+                byte diseaseIdx = data[baseKey + "_diseaseIdx"].Byte;
+                int diseaseCount = data[baseKey + "_diseaseCount"].Int;
                 if (mass <= 0f) continue;
 
                 Tag tag = new Tag(hash);
