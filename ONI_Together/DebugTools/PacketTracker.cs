@@ -467,7 +467,22 @@ namespace ONI_Together.DebugTools
 
                 if (ImGui.Begin(title, ref win.Open))
                 {
-                    ImGui.TextDisabled($"Track ID: {data.TrackId}  |  Size: {Utils.FormatBytes(data.size)}");
+                    string header = $"Track ID: {data.TrackId}  |  Size: {Utils.FormatBytes(data.size)}";
+                    var netIdField = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                        .FirstOrDefault(f => f.Name.Equals("NetID", StringComparison.OrdinalIgnoreCase));
+                    if (netIdField != null)
+                    {
+                        try
+                        {
+                            int netId = (int)netIdField.GetValue(data.packet);
+                            if (NetworkIdentityRegistry.TryGet(netId, out var identity))
+                                header += $"  |  Network Object: {string.Format(global::STRINGS.UI.StripLinkFormatting(identity.gameObject.name))}";
+                            else
+                                header += "  |  Network Object: ~";
+                        }
+                        catch { header += "  |  Network Object: ~"; }
+                    }
+                    ImGui.TextDisabled(header);
                     ImGui.Separator();
 
                     var ifaces = type.GetInterfaces()
@@ -483,12 +498,12 @@ namespace ONI_Together.DebugTools
                         ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY))
                     {
                         ImGui.TableSetupColumn("Field", ImGuiTableColumnFlags.WidthStretch);
-                        ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 100);
+                        ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.WidthFixed, 160);
                         ImGui.TableSetupColumn("Size", ImGuiTableColumnFlags.WidthFixed, 50);
                         ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
                         ImGui.TableHeadersRow();
 
-                        var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                        var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                             .OrderBy(f => f.Name)
                             .ToList();
 
@@ -503,18 +518,26 @@ namespace ONI_Together.DebugTools
                         {
                             ImGui.TableNextRow();
                             ImGui.TableNextColumn();
-                            ImGui.Text(field.Name);
+                            if (field.IsPublic)
+                                ImGui.Text(field.Name);
+                            else
+                                ImGui.TextColored(new Vector4(0.55f, 0.55f, 0.55f, 1f), field.Name);
                             ImGui.TableNextColumn();
                             try
                             {
                                 object val = field.GetValue(data.packet);
-                                ImGui.Text(GetFriendlyTypeName(field.FieldType, val));
+                                string typeName = GetFriendlyTypeName(field.FieldType, val);
+                                ImGui.Text(typeName);
+                                if (ImGui.IsItemHovered() && typeName.Length > 15)
+                                    ImGui.SetTooltip(typeName);
                                 ImGui.TableNextColumn();
                                 ImGui.Text(GetFieldSizeHint(val, field.FieldType));
                                 ImGui.TableNextColumn();
                                 bool isList = field.FieldType.IsGenericType
                                     && field.FieldType.GetGenericTypeDefinition() == typeof(List<>);
                                 bool isArr = field.FieldType.IsArray;
+                                bool isDict = field.FieldType.IsGenericType
+                                    && field.FieldType.GetGenericTypeDefinition() == typeof(Dictionary<,>);
 
                                 if ((isList || isArr) && val != null)
                                 {
@@ -543,7 +566,10 @@ namespace ONI_Together.DebugTools
                                             try
                                             {
                                                 object elemVal = list[i];
-                                                ImGui.Text(GetFriendlyTypeName(elemType, elemVal));
+                                                string elemTypeName = GetFriendlyTypeName(elemType, elemVal);
+                                                ImGui.Text(elemTypeName);
+                                                if (ImGui.IsItemHovered() && elemTypeName.Length > 15)
+                                                    ImGui.SetTooltip(elemTypeName);
                                                 ImGui.TableNextColumn();
                                                 ImGui.Text(GetFieldSizeHint(elemVal, elemType));
                                                 ImGui.TableNextColumn();
@@ -553,6 +579,55 @@ namespace ONI_Together.DebugTools
                                             {
                                                 ImGui.TextDisabled("?");
                                             }
+                                        }
+                                        if (count > maxShow)
+                                        {
+                                            ImGui.TableNextRow();
+                                            ImGui.TableNextColumn();
+                                            ImGui.Text($"  ... and {count - maxShow} more");
+                                        }
+                                    }
+                                }
+                                else if (isDict && val != null)
+                                {
+                                    var dict = (System.Collections.IDictionary)val;
+                                    int count = dict.Count;
+                                    bool expanded = win.ExpandedFields.Contains(field.Name);
+                                    if (ImGui.Selectable($"[Count: {count}]", expanded))
+                                    {
+                                        if (expanded) win.ExpandedFields.Remove(field.Name);
+                                        else win.ExpandedFields.Add(field.Name);
+                                    }
+
+                                    if (expanded)
+                                    {
+                                        int maxShow = Math.Min(count, 100);
+                                        Type keyType = field.FieldType.GetGenericArguments()[0];
+                                        Type valType = field.FieldType.GetGenericArguments()[1];
+                                        int shown = 0;
+                                        foreach (System.Collections.DictionaryEntry entry in dict)
+                                        {
+                                            if (shown >= maxShow) break;
+                                            ImGui.TableNextRow();
+                                            ImGui.TableNextColumn();
+                                            ImGui.Text($"  [{FormatFieldValue(entry.Key, keyType)}]");
+                                            ImGui.TableNextColumn();
+                                            try
+                                            {
+                                                string valTypeName = GetFriendlyTypeName(valType, entry.Value);
+                                                ImGui.Text(valTypeName);
+                                                if (ImGui.IsItemHovered() && valTypeName.Length > 15)
+                                                    ImGui.SetTooltip(valTypeName);
+                                                ImGui.TableNextColumn();
+                                                ImGui.Text(GetFieldSizeHint(entry.Value, valType));
+                                                ImGui.TableNextColumn();
+                                                ImGui.Text(FormatFieldValue(entry.Value, valType));
+                                            }
+                                            catch
+                                            {
+                                                ImGui.TextDisabled("?");
+                                            }
+                                            shown++;
                                         }
                                         if (count > maxShow)
                                         {
@@ -710,7 +785,7 @@ namespace ONI_Together.DebugTools
             if (type == typeof(Color))    return "16";
             if (type == typeof(string))   return "~";
             if (type.IsEnum) return GetFieldSizeHint(Enum.GetUnderlyingType(type));
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>)) return "~";
+            if (type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(List<>) || type.GetGenericTypeDefinition() == typeof(Dictionary<,>))) return "~";
             if (type.IsArray)  return "~";
             if (type == typeof(Variant)) return "~";
             if (!type.IsValueType) return "~";
@@ -766,6 +841,11 @@ namespace ONI_Together.DebugTools
             {
                 var list = (System.Collections.IList)val;
                 return $"[Count: {list?.Count ?? 0}]";
+            }
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+            {
+                var dict = (System.Collections.IDictionary)val;
+                return $"[Count: {dict?.Count ?? 0}]";
             }
             if (type.IsArray)
             {
