@@ -806,6 +806,7 @@ namespace ONI_Together.DebugTools
                     Variant.TypeCode.Boolean => "1",
                     Variant.TypeCode.Vector3 => "12",
                     Variant.TypeCode.Vector2 => "8",
+                    Variant.TypeCode.ByteArray => "~",
                     _ => "?"
                 };
             }
@@ -864,6 +865,7 @@ namespace ONI_Together.DebugTools
                     Variant.TypeCode.Boolean => v.Boolean.ToString(),
                     Variant.TypeCode.Vector3 => $"({v.Vector3.x:F3}, {v.Vector3.y:F3}, {v.Vector3.z:F3})",
                     Variant.TypeCode.Vector2 => $"({v.Vector2.x:F3}, {v.Vector2.y:F3})",
+                    Variant.TypeCode.ByteArray => $"byte[{v.ByteArray?.Length ?? 0}]",
                     _ => $"? ({(byte)v.Type})"
                 };
             }

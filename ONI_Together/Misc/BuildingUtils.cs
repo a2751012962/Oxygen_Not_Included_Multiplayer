@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using ONI_Together.DebugTools;
 using UnityEngine;
 using static LogicGateVisualizer;
-using static ONI_Together.Networking.Components.StructureStateSyncers.StorageStateSyncer;
 
 namespace ONI_Together.Misc
 {
@@ -31,60 +32,67 @@ namespace ONI_Together.Misc
 
         public static void EncodeStorageContents(Storage storage, Dictionary<string, Variant> optionalValues, string keyPrefix = "")
         {
-            var items = new List<StorageData>();
+            using var ms = new MemoryStream();
+            using var writer = new BinaryWriter(ms);
+
+            writer.Write(storage.capacityKg);
+
+            var validItems = new List<GameObject>();
             for (int i = 0; i < storage.items.Count; i++)
             {
-                if (storage.items[i] == null) continue;
-                var pe = storage.items[i].GetComponent<PrimaryElement>();
+                var go = storage.items[i];
+                if (go == null) continue;
+                var pe = go.GetComponent<PrimaryElement>();
                 if (pe == null || pe.Mass <= 0f) continue;
-                if (!storage.items[i].TryGetComponent<KPrefabID>(out var prefabID))
-                    continue;
-
-                items.Add(new StorageData
-                {
-                    PrefabTagHash = prefabID.PrefabTag.GetHashCode(),
-                    Mass = pe.Mass,
-                    Units = pe.Units,
-                    Temperature = pe.Temperature,
-                    DiseaseIdx = pe.DiseaseIdx,
-                    DiseaseCount = pe.DiseaseCount
-                });
+                if (!go.TryGetComponent<KPrefabID>(out _)) continue;
+                validItems.Add(go);
             }
 
-            optionalValues[keyPrefix + "capacityKg"] = storage.capacityKg;
-            optionalValues[keyPrefix + "item_count"] = items.Count;
-            for (int i = 0; i < items.Count; i++)
+            writer.Write(validItems.Count);
+            foreach (var go in validItems)
             {
-                var item = items[i];
-                optionalValues[keyPrefix + "item_" + i + "_hash"] = item.PrefabTagHash;
-                optionalValues[keyPrefix + "item_" + i + "_mass"] = item.Mass;
-                optionalValues[keyPrefix + "item_" + i + "_units"] = item.Units;
-                optionalValues[keyPrefix + "item_" + i + "_temperature"] = item.Temperature;
-                optionalValues[keyPrefix + "item_" + i + "_diseaseIdx"] = item.DiseaseIdx;
-                optionalValues[keyPrefix + "item_" + i + "_diseaseCount"] = item.DiseaseCount;
+                var pe = go.GetComponent<PrimaryElement>();
+                var prefabID = go.GetComponent<KPrefabID>();
+                writer.Write(prefabID.PrefabTag.GetHashCode());
+                writer.Write(pe.Mass);
+                writer.Write(pe.Temperature);
+                writer.Write(pe.DiseaseIdx);
+                writer.Write(pe.DiseaseCount);
             }
+
+            optionalValues[keyPrefix + "stor"] = ms.ToArray();
         }
 
         public static void RebuildStorageFromData(Storage storage, Dictionary<string, Variant> data, string keyPrefix = "", string diseaseReason = "Multiplayer Sync")
         {
             if (storage == null) return;
-            if (!data.TryGetValue(keyPrefix + "capacityKg", out _) || !data.TryGetValue(keyPrefix + "item_count", out var countVar)) return;
 
+            if (data.TryGetValue(keyPrefix + "stor", out var blobVar) && blobVar.ByteArray != null)
+            {
+                RebuildFromBlob(storage, blobVar.ByteArray, diseaseReason);
+                return;
+            }
+            
+            DebugConsole.LogError($"[Storage/RebuildStorageFromData] Failed to rebuild storage from data! Key: {keyPrefix + "stor"} not found!");
+        }
+
+        private static void RebuildFromBlob(Storage storage, byte[] blob, string diseaseReason)
+        {
+            using var ms = new MemoryStream(blob);
+            using var reader = new BinaryReader(ms);
+
+            float capacityKg = reader.ReadSingle();
+            int count = reader.ReadInt32();
             ClearStorage(storage);
-
-            int count = countVar.Int;
             if (count == 0) return;
 
             for (int i = 0; i < count; i++)
             {
-                string baseKey = keyPrefix + "item_" + i;
-                if (!data.TryGetValue(baseKey + "_hash", out var hashVar)) break;
-
-                int hash = hashVar.Int;
-                float mass = data[baseKey + "_mass"].Float;
-                float temperature = data[baseKey + "_temperature"].Float;
-                byte diseaseIdx = data[baseKey + "_diseaseIdx"].Byte;
-                int diseaseCount = data[baseKey + "_diseaseCount"].Int;
+                int hash = reader.ReadInt32();
+                float mass = reader.ReadSingle();
+                float temperature = reader.ReadSingle();
+                byte diseaseIdx = reader.ReadByte();
+                int diseaseCount = reader.ReadInt32();
                 if (mass <= 0f) continue;
 
                 Tag tag = new Tag(hash);
@@ -111,7 +119,7 @@ namespace ONI_Together.Misc
                 }
             }
         }
-
+        
         private static void ClearStorage(Storage storage)
         {
             for (int i = storage.items.Count - 1; i >= 0; i--)

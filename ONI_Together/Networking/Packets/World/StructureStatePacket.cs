@@ -34,12 +34,16 @@ namespace ONI_Together.Networking.Packets.World
             Value.Write(writer);
 			writer.Write(IsActive);
 
-            writer.Write(OptionalValues.Count);
+            using var optMs = new MemoryStream();
+            using var optBw = new BinaryWriter(optMs);
+            optBw.Write(OptionalValues.Count);
             foreach (var kvp in OptionalValues)
             {
-                writer.Write(kvp.Key);
-                kvp.Value.Write(writer);
+                optBw.Write(kvp.Key);
+                kvp.Value.Write(optBw);
             }
+            writer.Write((int)optMs.Length);
+            writer.Write(optMs.GetBuffer(), 0, (int)optMs.Length);
         }
 
 		public void Deserialize(BinaryReader reader)
@@ -51,12 +55,15 @@ namespace ONI_Together.Networking.Packets.World
 			Value = Variant.Read(reader);
 			IsActive = reader.ReadBoolean();
 
-            int length = reader.ReadInt32();
+            int optLen = reader.ReadInt32();
+            byte[] optBlob = reader.ReadBytes(optLen);
+            using var optBr = new BinaryReader(new MemoryStream(optBlob));
+            int length = optBr.ReadInt32();
             OptionalValues = new Dictionary<string, Variant>(length);
             for (int i = 0; i < length; i++)
             {
-                string key = reader.ReadString();
-                OptionalValues[key] = Variant.Read(reader);
+                string key = optBr.ReadString();
+                OptionalValues[key] = Variant.Read(optBr);
             }
         }
 
@@ -103,9 +110,22 @@ namespace ONI_Together.Networking.Packets.World
                 case Variant.TypeCode.Boolean:
                     if (a.Boolean != b.Boolean) return true;
                     break;
+                case Variant.TypeCode.ByteArray:
+                    if (!ByteArraysEqual(a.ByteArray, b.ByteArray)) return true;
+                    break;
             }
 
             return false;
+        }
+
+        private static bool ByteArraysEqual(byte[] a, byte[] b)
+        {
+            if (a == b) return true;
+            if (a == null || b == null) return false;
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+                if (a[i] != b[i]) return false;
+            return true;
         }
 
         public static bool OptionalValuesChanged(Dictionary<string, Variant> a, Dictionary<string, Variant> b)
