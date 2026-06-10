@@ -25,6 +25,7 @@ public class ReactorStateSyncer : StructureSyncerBase
         reactionStorage = reactor.reactionStorage;
         wasteStorage = reactor.wasteStorage;
         checkOptionalsValuesForChanges = false;
+        cullByViewport = false;
     }
 
     protected override void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues)

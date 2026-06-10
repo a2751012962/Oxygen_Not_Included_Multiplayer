@@ -12,7 +12,7 @@ using Shared.Interfaces.Networking;
 
 namespace ONI_Together.Networking.Packets.World
 {
-	public class StructureStatePacket : IPacket, IViewportCullable
+	public class StructureStatePacket : IPacket
 	{
 
         public int NetId;
@@ -22,8 +22,6 @@ namespace ONI_Together.Networking.Packets.World
 		public Dictionary<string, Variant> OptionalValues = []; // Extra things (such as EnergyGenerator mass, storage amount etc)
 
 		public bool IsActive; // Operational active state
-
-        public int GetViewportCell() => Cell;
 
         public void Serialize(BinaryWriter writer)
 		{

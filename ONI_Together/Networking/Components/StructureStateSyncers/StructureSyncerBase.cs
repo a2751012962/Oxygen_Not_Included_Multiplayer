@@ -18,6 +18,9 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
         protected bool lastSentActive;
         protected Dictionary<string, Variant> lastOptionalValues;
         protected bool checkOptionalsValuesForChanges = true;
+        protected bool cullByViewport = true;
+
+        private readonly HashSet<ulong> _viewportScratch = new();
 
         private bool _initialized;
         private float _initializationTime;
@@ -96,7 +99,18 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
                     OptionalValues = optionalValues,
                 };
 
-                PacketSender.SendToAllClients(packet, PacketSendMode.Unreliable);
+                if (cullByViewport && WorldStateSyncer.Instance != null)
+                {
+                    WorldStateSyncer.Instance.GetClientsViewingCell(cell, _viewportScratch, 2);
+                    foreach (var playerId in _viewportScratch)
+                    {
+                        PacketSender.SendToPlayer(playerId, packet, PacketSendMode.Unreliable);
+                    }
+                }
+                else
+                {
+                    PacketSender.SendToAllClients(packet, PacketSendMode.Unreliable);
+                }
             }
         }
 
