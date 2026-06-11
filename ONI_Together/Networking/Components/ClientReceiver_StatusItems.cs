@@ -10,9 +10,20 @@ namespace ONI_Together.Networking.Components
 {
     public class ClientReceiver_StatusItems : KMonoBehaviour
     {
+        public enum StatusRecieverType
+        {
+            DUPLICANT,
+            CREATURE,
+            MISC,
+            BUILDING,
+            ROBOT
+        }
+        
         [MyCmpGet] private NetworkIdentity identity;
         [MyCmpGet] private KSelectable selectable;
 
+        public StatusRecieverType recieverType = StatusRecieverType.DUPLICANT;
+        
         public float LastApplyTime { get; private set; }
 
         public void Apply(List<StatusItemEntry> entries)
@@ -44,11 +55,19 @@ namespace ONI_Together.Networking.Components
             }
         }
 
-        private static StatusItem BuildSyncedItem(StatusItemEntry entry)
+        private StatusItem BuildSyncedItem(StatusItemEntry entry)
         {
             if (string.IsNullOrEmpty(entry.ItemId)) return null;
 
-            var original = Db.Get().DuplicantStatusItems.TryGet(entry.ItemId);
+            StatusItem original = recieverType switch
+            {
+                StatusRecieverType.CREATURE => Db.Get().CreatureStatusItems.TryGet(entry.ItemId),
+                StatusRecieverType.MISC => Db.Get().MiscStatusItems.TryGet(entry.ItemId),
+                StatusRecieverType.BUILDING => Db.Get().BuildingStatusItems.TryGet(entry.ItemId),
+                StatusRecieverType.ROBOT => Db.Get().RobotStatusItems.TryGet(entry.ItemId),
+                _ => Db.Get().DuplicantStatusItems.TryGet(entry.ItemId),
+            };
+
             if (original != null)
             {
                 var item = new StatusItem(

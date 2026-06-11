@@ -7,11 +7,8 @@ using UnityEngine;
 
 namespace ONI_Together.Networking.Components
 {
-    public class DuplicantStatusBroadcaster : KMonoBehaviour, IRender200ms
+    public class EntityStatusBroadcaster : KMonoBehaviour, IRender200ms
     {
-        public static readonly HashSet<int> SubscribedNetIds = new();
-        public static readonly HashSet<int> PendingImmediate = new();
-
         private const float SoftSyncInterval = 0.5f;
         private const float HardSyncInterval = 10f;
 
@@ -38,14 +35,14 @@ namespace ONI_Together.Networking.Components
             timeSinceLastSoftSync += dt;
             timeSinceHardSync += dt;
 
-            bool isSubscribed = SubscribedNetIds.Contains(identity.NetId);
-            bool doSoftSync = isSubscribed && timeSinceLastSoftSync >= SoftSyncInterval;
+            int cell = Grid.PosToCell(transform.position);
+            bool isVisible = WorldStateSyncer.Instance.IsCellVisibleToAnyClientViewport(cell, margin: 4);
+            bool doSoftSync = isVisible && timeSinceLastSoftSync >= SoftSyncInterval;
             bool doHardSync = timeSinceHardSync >= HardSyncInterval;
-            bool immediate = PendingImmediate.Remove(identity.NetId);
 
-            if (immediate || doSoftSync || doHardSync)
+            if (doSoftSync || doHardSync)
             {
-                if (doSoftSync || immediate) timeSinceLastSoftSync = 0f;
+                if (doSoftSync) timeSinceLastSoftSync = 0f;
                 if (doHardSync) timeSinceHardSync = 0f;
 
                 try

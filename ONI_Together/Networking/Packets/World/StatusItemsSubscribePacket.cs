@@ -30,13 +30,13 @@ namespace ONI_Together.Networking.Packets.World
             if (!MultiplayerSession.IsHost) return;
             if (Subscribe)
             {
-                DuplicantStatusBroadcaster.SubscribedNetIds.Add(DupeNetId);
-                DuplicantStatusBroadcaster.PendingImmediate.Add(DupeNetId);
+                EntityStatusBroadcaster.SubscribedNetIds.Add(DupeNetId);
+                EntityStatusBroadcaster.PendingImmediate.Add(DupeNetId);
             }
             else
             {
-                DuplicantStatusBroadcaster.SubscribedNetIds.Remove(DupeNetId);
-                DuplicantStatusBroadcaster.PendingImmediate.Remove(DupeNetId);
+                EntityStatusBroadcaster.SubscribedNetIds.Remove(DupeNetId);
+                EntityStatusBroadcaster.PendingImmediate.Remove(DupeNetId);
             }
         }
     }
