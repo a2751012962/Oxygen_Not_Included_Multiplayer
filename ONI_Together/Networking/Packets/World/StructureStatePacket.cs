@@ -12,18 +12,16 @@ using Shared.Interfaces.Networking;
 
 namespace ONI_Together.Networking.Packets.World
 {
-	public class StructureStatePacket : IPacket//, IViewportCullable
+	public class StructureStatePacket : IPacket
 	{
 
         public int NetId;
         public int Cell;
 		public Variant Value; // Joules for Battery, Progress for others
 
-		public List<Variant> OptionalValues = []; // Extra things (such as EnergyGenerator mass, storage amount etc)
+		public Dictionary<string, Variant> OptionalValues = []; // Extra things (such as EnergyGenerator mass, storage amount etc)
 
 		public bool IsActive; // Operational active state
-
-        //public int GetViewportCell() => Cell;
 
         public void Serialize(BinaryWriter writer)
 		{
@@ -34,11 +32,16 @@ namespace ONI_Together.Networking.Packets.World
             Value.Write(writer);
 			writer.Write(IsActive);
 
-            writer.Write(OptionalValues.Count);
-            for (int i = 0; i < OptionalValues.Count; i++)
+            using var optMs = new MemoryStream();
+            using var optBw = new BinaryWriter(optMs);
+            optBw.Write(OptionalValues.Count);
+            foreach (var kvp in OptionalValues)
             {
-                OptionalValues[i].Write(writer);
+                optBw.Write(kvp.Key);
+                kvp.Value.Write(optBw);
             }
+            writer.Write((int)optMs.Length);
+            writer.Write(optMs.GetBuffer(), 0, (int)optMs.Length);
         }
 
 		public void Deserialize(BinaryReader reader)
@@ -50,11 +53,15 @@ namespace ONI_Together.Networking.Packets.World
 			Value = Variant.Read(reader);
 			IsActive = reader.ReadBoolean();
 
-            int length = reader.ReadInt32();
-            OptionalValues = new List<Variant>(length);
+            int optLen = reader.ReadInt32();
+            byte[] optBlob = reader.ReadBytes(optLen);
+            using var optBr = new BinaryReader(new MemoryStream(optBlob));
+            int length = optBr.ReadInt32();
+            OptionalValues = new Dictionary<string, Variant>(length);
             for (int i = 0; i < length; i++)
             {
-                OptionalValues.Add(Variant.Read(reader));
+                string key = optBr.ReadString();
+                OptionalValues[key] = Variant.Read(optBr);
             }
         }
 
@@ -101,21 +108,34 @@ namespace ONI_Together.Networking.Packets.World
                 case Variant.TypeCode.Boolean:
                     if (a.Boolean != b.Boolean) return true;
                     break;
+                case Variant.TypeCode.ByteArray:
+                    if (!ByteArraysEqual(a.ByteArray, b.ByteArray)) return true;
+                    break;
             }
 
             return false;
         }
 
-        public static bool OptionalValuesChanged(List<Variant> a, List<Variant> b)
+        private static bool ByteArraysEqual(byte[] a, byte[] b)
+        {
+            if (a == b) return true;
+            if (a == null || b == null) return false;
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+                if (a[i] != b[i]) return false;
+            return true;
+        }
+
+        public static bool OptionalValuesChanged(Dictionary<string, Variant> a, Dictionary<string, Variant> b)
         {
             if (a == null && b == null) return false;
             if (a == null || b == null) return true;
             if (a.Count != b.Count) return true;
 
-            for (int i = 0; i < a.Count; i++)
+            foreach (var kvp in a)
             {
-                bool changed = VariantValueChanged(a[i], b[i]);
-                if (changed) return true;
+                if (!b.TryGetValue(kvp.Key, out var bVal)) return true;
+                if (VariantValueChanged(kvp.Value, bVal)) return true;
             }
             return false;
         }

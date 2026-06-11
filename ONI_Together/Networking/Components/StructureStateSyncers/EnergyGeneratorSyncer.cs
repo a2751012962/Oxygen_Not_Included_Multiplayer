@@ -21,35 +21,30 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
             storage = energyGen?.storage;
         }
 
-        protected override void SampleState(out Variant value, out bool active, out List<Variant> optionalValues)
+        protected override void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues)
         {
             value = generator?.JoulesAvailable ?? 0f;
             active = false;
 
+            optionalValues = new Dictionary<string, Variant>();
+
             if (energyGen == null || !energyGen.hasMeter || storage == null)
-            {
-                optionalValues = new List<Variant>();
                 return;
-            }
 
             var inputItem = energyGen.formula.inputs[0];
-            optionalValues = new List<Variant>() 
-            {
-                storage.GetMassAvailable(inputItem.tag),
-                inputItem.maxStoredMass
-            };
-            
+            optionalValues["input_mass"] = storage.GetMassAvailable(inputItem.tag);
+            optionalValues["max_stored_mass"] = inputItem.maxStoredMass;
         }
 
         protected override void ApplyState(StructureStatePacket packet)
         {
             if (generator == null) return;
 
-            if (packet.OptionalValues.Count >= 2 && energyGen != null)
+            if (packet.OptionalValues.TryGetValue("input_mass", out var massVar) &&
+                packet.OptionalValues.TryGetValue("max_stored_mass", out var maxVar) &&
+                energyGen != null)
             {
-                float mass = packet.OptionalValues[0].Float;
-                float storedMass = packet.OptionalValues[1].Float;
-                energyGen.meter?.SetPositionPercent(Mathf.Clamp01(mass / storedMass));
+                energyGen.meter?.SetPositionPercent(Mathf.Clamp01(massVar.Float / maxVar.Float));
             }
 
             generator.AssignJoulesAvailable(packet.Value.Float);

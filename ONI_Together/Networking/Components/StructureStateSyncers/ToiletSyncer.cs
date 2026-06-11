@@ -26,19 +26,19 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
             prefabID = GetComponent<KPrefabID>();
         }
 
-        protected override void SampleState(out Variant value, out bool active, out List<Variant> optionalValues)
+        protected override void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues)
         {
             active = false;
-            BuildingUtils.EncodeStorageContents(storage, out optionalValues);
-            optionalValues.Add(operational?.IsOperational ?? true);
+            optionalValues = new Dictionary<string, Variant>();
+            BuildingUtils.EncodeStorageContents(storage, optionalValues);
+            optionalValues["is_operational"] = operational?.IsOperational ?? true;
             if (flushToilet != null)
             {
                 value = storage?.MassStored() ?? 0f;
                 GetTotalWater(out float totalWater, out float totalWaste, out float totalGunk);
-                optionalValues.Add(totalWater);
-                optionalValues.Add(totalWaste);
-                optionalValues.Add(totalGunk);
-                optionalValues.Add(totalGunk);
+                optionalValues["total_water"] = totalWater;
+                optionalValues["total_waste"] = totalWaste;
+                optionalValues["total_gunk"] = totalGunk;
             }
             else if (outhouseToilet != null)
             {
@@ -56,22 +56,12 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
             BuildingUtils.RebuildStorageFromData(storage, packet.OptionalValues);
             SyncToilet(packet);
 
-            // Seems to solve out of order
-            if (packet.OptionalValues.Count > 0)
+            if (packet.OptionalValues.TryGetValue("is_operational", out var isOp))
             {
-                int itemCount = packet.OptionalValues[1].Int;
-                int storageEnd = 2 + itemCount * 6;
-                int idx = storageEnd; // skip IsFunctional
-
-                bool functional = packet.OptionalValues[idx].Boolean;
-                if (functional)
-                {
+                if (isOp.Boolean)
                     prefabID.AddTag(GameTags.Operational);
-                }
                 else
-                {
                     prefabID.RemoveTag(GameTags.Operational);
-                }
             }
         }
 
@@ -102,13 +92,11 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
 
         private void SyncFlushToilet(StructureStatePacket packet)
         {
-            int itemCount = packet.OptionalValues[1].Int;
-            int storageEnd = 2 + itemCount * 6;
-            int idx = storageEnd + 1; // skip IsFunctional
-
-            float totalWater = packet.OptionalValues[idx].Float;
-            float totalWaste = packet.OptionalValues[idx + 1].Float;
-            float totalGunk = packet.OptionalValues[idx + 2].Float;
+            var opt = packet.OptionalValues;
+            float totalWater = 0f, totalWaste = 0f, totalGunk = 0f;
+            if (opt.TryGetValue("total_water", out var w)) totalWater = w.Float;
+            if (opt.TryGetValue("total_waste", out var wa)) totalWaste = wa.Float;
+            if (opt.TryGetValue("total_gunk", out var g)) totalGunk = g.Float;
             bool full = totalWater >= flushToilet.massConsumedPerUse;
 
             if (conduitConsumer != null)

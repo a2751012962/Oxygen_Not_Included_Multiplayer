@@ -16,11 +16,11 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
             generator = new Generator();
         }
 
-        protected override void SampleState(out Variant value, out bool active, out List<Variant> optionalValues)
+        protected override void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues)
         {
             value = generator?.JoulesAvailable ?? 0f;
             active = false;
-            optionalValues = new List<Variant>();
+            optionalValues = new Dictionary<string, Variant>();
         }
 
         protected override void ApplyState(StructureStatePacket packet)

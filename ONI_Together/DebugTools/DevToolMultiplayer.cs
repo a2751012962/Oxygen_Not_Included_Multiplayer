@@ -2,6 +2,7 @@
 #if DEBUG //OS_WINDOWS || DEBUG
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using ImGuiNET;
@@ -56,6 +57,17 @@ namespace ONI_Together.DebugTools
         private bool unitTestAutoRun = false;
         private float unitTestAutoRunInterval = 2.0f;
         private float unitTestAutoRunTimer = 0f;
+
+        // Independent popout windows
+        private struct PopoutWindow
+        {
+            public int Id;
+            public string Title;
+            public System.Action Render;
+            public bool Open;
+        }
+        private List<PopoutWindow> _popoutWindows = new();
+        private int _nextPopoutId;
 
         private static readonly string ModDirectory = Path.Combine(
             Path.GetDirectoryName(typeof(DevToolMultiplayer).Assembly.Location),
@@ -152,6 +164,9 @@ namespace ONI_Together.DebugTools
 
                 if (ImGui.BeginTabItem("Profiler"))
                 {
+                    if (ImGui.Button("Open Popout"))
+                        OpenPopout("Profiler", () => Profiler.DrawImGuiInline());
+                    ImGui.SameLine();
                     DisplayProfilers();
                     ImGui.EndTabItem();
                 }
@@ -161,9 +176,36 @@ namespace ONI_Together.DebugTools
 
             ImGui.EndChild();
 
-            console?.ShowWindow();
-            packetTracker?.ShowWindow();
-            Profiler.DrawImGuiPopout();
+            DrawPopoutWindows();
+        }
+
+        private void OpenPopout(string title, System.Action render)
+        {
+            _popoutWindows.RemoveAll(p => !p.Open);
+            _popoutWindows.Add(new PopoutWindow
+            {
+                Id = _nextPopoutId++,
+                Title = title,
+                Render = render,
+                Open = true
+            });
+        }
+
+        private void DrawPopoutWindows()
+        {
+            _popoutWindows.RemoveAll(p => !p.Open);
+            for (int i = 0; i < _popoutWindows.Count; i++)
+            {
+                var pw = _popoutWindows[i];
+                if (!pw.Open) continue;
+                string id = $"{pw.Title}##popout_{pw.Id}";
+                if (ImGui.Begin(id, ref pw.Open))
+                {
+                    pw.Render();
+                }
+                ImGui.End();
+                _popoutWindows[i] = pw;
+            }
         }
 
         private void DrawGeneralTab()
@@ -297,8 +339,11 @@ namespace ONI_Together.DebugTools
             if (ImGui.CollapsingHeader("Packet Tracker"))
             {
                 ImGui.Indent();
-                if (ImGui.Button("Toggle Popout"))
-                    packetTracker?.Toggle();
+                if (ImGui.Button("Open Popout"))
+                    OpenPopout("Packet Tracker", () => packetTracker?.ShowInTab());
+                ImGui.SameLine();
+                if (ImGui.Button("Open Bandwidth Popout"))
+                    OpenPopout("Bandwidth", () => packetTracker?.DrawBandwidth());
                 packetTracker?.ShowInTab();
                 ImGui.Unindent();
             }
@@ -488,8 +533,8 @@ namespace ONI_Together.DebugTools
         {
             using var _ = Profiler.Scope();
 
-            if (ImGui.Button("Popout"))
-                console?.Toggle();
+            if (ImGui.Button("Open Popout"))
+                OpenPopout("Console", () => console?.ShowInTab());
             ImGui.SameLine();
             console?.ShowInTab();
         }

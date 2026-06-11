@@ -7,13 +7,13 @@ using UnityEngine;
 namespace ONI_Together.Misc
 {
     /// <summary>
-    /// A type-safe tagged union that holds one value of multiple possible types (Float, Int, Byte, String, Boolean) at a time,
+    /// A type-safe tagged union that holds one value of multiple possible types (Float, Int, Byte, String, Boolean, Vector3, Vector2) at a time,
     /// identified by a discriminator (Type). Eliminates unsafe type punning and boxing by storing the actual typed value
     /// with self-describing serialization via BinaryWriter/BinaryReader.
     /// </summary>
     public struct Variant
     {
-        public enum TypeCode : byte { Float, Int, Byte, String, Boolean, Vector3, Vector2 }
+        public enum TypeCode : byte { Float, Int, Byte, String, Boolean, Vector3, Vector2, ByteArray }
 
         public TypeCode Type;
         public float Float;
@@ -23,6 +23,7 @@ namespace ONI_Together.Misc
         public bool Boolean;
         public Vector3 Vector3;
         public Vector2 Vector2;
+        public byte[] ByteArray;
 
         public void Write(BinaryWriter writer)
         {
@@ -36,6 +37,7 @@ namespace ONI_Together.Misc
                 case TypeCode.Boolean: writer.Write(Boolean); break;
                 case TypeCode.Vector3: writer.Write(Vector3); break;
                 case TypeCode.Vector2: writer.Write(Vector2); break;
+                case TypeCode.ByteArray: writer.Write(ByteArray.Length); writer.Write(ByteArray); break;
             }
         }
 
@@ -51,6 +53,7 @@ namespace ONI_Together.Misc
                 case TypeCode.Boolean: v.Boolean = reader.ReadBoolean(); break;
                 case TypeCode.Vector3: v.Vector3 = reader.ReadVector3(); break;
                 case TypeCode.Vector2: v.Vector2 = reader.ReadVector2(); break;
+                case TypeCode.ByteArray: v.ByteArray = reader.ReadBytes(reader.ReadInt32()); break;
             }
             return v;
         }
@@ -62,6 +65,7 @@ namespace ONI_Together.Misc
         public static implicit operator Variant(bool b) => new Variant { Type = TypeCode.Boolean, Boolean = b };
         public static implicit operator Variant(Vector3 v) => new Variant { Type = TypeCode.Vector3, Vector3 = v };
         public static implicit operator Variant(Vector2 v) => new Variant { Type = TypeCode.Vector2, Vector2 = v };
+        public static implicit operator Variant(byte[] b) => new Variant { Type = TypeCode.ByteArray, ByteArray = b };
 
         public readonly override string ToString()
         {
@@ -74,6 +78,7 @@ namespace ONI_Together.Misc
                 TypeCode.Boolean => Boolean.ToString(),
                 TypeCode.Vector3 => Vector3.ToString(),
                 TypeCode.Vector2 => Vector2.ToString(),
+                TypeCode.ByteArray => $"byte[{ByteArray?.Length ?? 0}]",
                 _ => "Unknown"
             };
         }
