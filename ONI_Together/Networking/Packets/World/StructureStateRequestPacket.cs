@@ -27,10 +27,15 @@ public class StructureStateRequestPacket : IPacket
         if (!MultiplayerSession.IsHost) return;
 
         if (!NetworkIdentityRegistry.TryGet(NetId, out var identity))
+        {
+            LogicStateSyncer.Instance?.SendStateToClient(RequesterId, NetId);
             return;
+        }
 
         var syncers = identity.GetComponents<StructureSyncerBase>();
         foreach (var syncer in syncers)
             syncer.SendStateToClient(RequesterId);
+
+        LogicStateSyncer.Instance?.SendStateToClient(RequesterId, NetId);
     }
 }
