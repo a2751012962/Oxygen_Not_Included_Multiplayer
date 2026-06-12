@@ -8,6 +8,7 @@ using ONI_Together.DebugTools;
 using ONI_Together.Menus;
 using ONI_Together.Networking;
 using ONI_Together.Networking.Components;
+using ONI_Together.Scripts.Creatures;
 using Shared.Profiling;
 using UnityEngine;
 
@@ -32,10 +33,7 @@ namespace ONI_Together.Patches.Critters
 					__result.AddOrGet<EntityPositionHandler>();
 					__result.AddOrGet<NetworkIdentity>();
 					__result.AddOrGet<AnimStateSyncer>();
-					
-					var statusReceiver = __result.AddOrGet<ClientReceiver_StatusItems>();
-					statusReceiver.recieverType = ClientReceiver_StatusItems.StatusRecieverType.CREATURE;
-					__result.AddOrGet<StatusBroadcaster>();
+					__result.AddOrGet<CreatureMultiplayerInitializer>();
 				}
 				catch (Exception ex)
 				{

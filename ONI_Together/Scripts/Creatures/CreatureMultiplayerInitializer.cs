@@ -1,13 +1,13 @@
-﻿using ONI_Together.DebugTools;
+using ONI_Together.DebugTools;
 using ONI_Together.Networking;
 using ONI_Together.Networking.Components;
 using System.Collections;
 using Shared.Profiling;
 using UnityEngine;
 
-namespace ONI_Together.Scripts.Duplicants
+namespace ONI_Together.Scripts.Creatures
 {
-	internal class MinionMultiplayerInitializer : KMonoBehaviour
+	internal class CreatureMultiplayerInitializer : KMonoBehaviour
 	{
 		[MyCmpGet] NetworkIdentity identity;
 		[MyCmpGet] KPrefabID kpref;
@@ -32,7 +32,7 @@ namespace ONI_Together.Scripts.Duplicants
 			using var scope = Profiler.Scope();
 			StartCoroutine(DelayedInit());
 		}
-		
+
 		IEnumerator DelayedInit()
 		{
 			using var _ = Profiler.Scope();
@@ -46,37 +46,37 @@ namespace ONI_Together.Scripts.Duplicants
 			if (HasInit) return;
 
 			var go = gameObject;
-			if (!kpref?.HasTag(GameTags.BaseMinion) ?? false) return;
+			if (!kpref?.HasTag(GameTags.Creature) ?? false) return;
+			if (kpref?.HasTag(GameTags.BaseMinion) ?? false) return;
 
 			if (MultiplayerSession.IsClient)
+			{
 				InitializeClient(go);
+			}
 			else
+			{
 				InitializeHost(go);
+			}
 
 			HasInit = true;
 		}
-		
+
+		void InitializeHost(GameObject go)
+		{
+			go.AddOrGet<StatusBroadcaster>();
+		}
+
 		void InitializeClient(GameObject go)
 		{
-			if (go.TryGetComponent<ChoreDriver>(out var driver)) driver.enabled = false;
-			if (go.TryGetComponent<ChoreConsumer>(out var consumer)) consumer.enabled = false;
-			if (go.TryGetComponent<MinionBrain>(out var brain)) brain.enabled = false;
+			if (go.TryGetComponent<CreatureBrain>(out var brain)) brain.enabled = false;
 			if (go.TryGetComponent<Sensors>(out var sensors)) sensors.enabled = false;
 
 			var stateMachineControllers = go.GetComponents<StateMachineController>();
 			foreach (var smc in stateMachineControllers)
 				if (smc != null) smc.enabled = false;
-
-			go.AddOrGet<ClientReceiver_ChoreErrands>();
-			var status_receiver = go.AddOrGet<ClientReceiver_StatusItems>();
-			status_receiver.recieverType = ClientReceiver_StatusItems.StatusRecieverType.DUPLICANT;
-		}
-
-		void InitializeHost(GameObject go)
-		{
-			go.AddOrGet<DuplicantStateSender>();
-			go.AddOrGet<DuplicantChoreBroadcaster>();
-			go.AddOrGet<StatusBroadcaster>();
+			
+			var statusReceiver = go.AddOrGet<ClientReceiver_StatusItems>();
+			statusReceiver.recieverType = ClientReceiver_StatusItems.StatusRecieverType.CREATURE;
 		}
 	}
 }
