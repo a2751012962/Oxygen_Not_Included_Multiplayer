@@ -32,8 +32,7 @@ namespace ONI_Together.Networking.Packets.Core
 
         // Utility path visualizer
         public bool HasUtilityPath = false;
-        public int[] UtilityPathCells;
-        public bool[] UtilityPathValidity;
+        public uint[] UtilityPathData;
 
         // Viewport for targeted sync
         public int ViewMinX, ViewMinY, ViewMaxX, ViewMaxY;
@@ -78,13 +77,9 @@ namespace ONI_Together.Networking.Packets.Core
 
             if (HasUtilityPath)
             {
-                ushort pathCount = (ushort)Mathf.Min(UtilityPathCells.Length, ushort.MaxValue);
-                writer.Write(pathCount);
-                for (int i = 0; i < pathCount; i++)
-                {
-                    writer.Write(UtilityPathCells[i]);
-                    writer.Write(UtilityPathValidity != null && i < UtilityPathValidity.Length && UtilityPathValidity[i]);
-                }
+                writer.Write(UtilityPathData.Length);
+                for (int i = 0; i < UtilityPathData.Length; i++)
+                    writer.Write(UtilityPathData[i]);
             }
         }
 
@@ -123,20 +118,13 @@ namespace ONI_Together.Networking.Packets.Core
 
             if (HasUtilityPath)
             {
-                ushort pathCount = reader.ReadUInt16();
-                UtilityPathCells = new int[pathCount];
-                UtilityPathValidity = new bool[pathCount];
-                for (int i = 0; i < pathCount; i++)
-                {
-                    UtilityPathCells[i] = reader.ReadInt32();
-                    UtilityPathValidity[i] = reader.ReadBoolean();
-                }
+                int count = reader.ReadInt32();
+                UtilityPathData = new uint[count];
+                for (int i = 0; i < count; i++)
+                    UtilityPathData[i] = reader.ReadUInt32();
             }
             else
-            {
-                UtilityPathCells = null;
-                UtilityPathValidity = null;
-            }
+                UtilityPathData = null;
         }
 
         public void OnDispatched()
@@ -201,7 +189,7 @@ namespace ONI_Together.Networking.Packets.Core
 		{
 			cursor.buildingVisualiser.UpdateVisualizer(BuildingPrefabId, position, BuildingOrientation, Color, BuildingAllowed);
 			cursor.areaVisualizer.UpdateArea(Color, AreaDownPos, Position, Dragging, DragMode, LengthLimit);
-			cursor.utilityVisualizer.UpdatePath(BuildingPrefabId, UtilityPathCells, UtilityPathValidity, Color);
+			cursor.utilityVisualizer.UpdatePath(BuildingPrefabId, UtilityPathData, Color);
 		}
 
 	}
