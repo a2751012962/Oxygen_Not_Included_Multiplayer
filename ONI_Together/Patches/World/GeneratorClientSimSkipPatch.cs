@@ -20,7 +20,25 @@ namespace ONI_Together.Patches.World
         {
             public static bool Prefix(EnergyGenerator __instance, float dt)
             {
-                return !SkipOnClient();
+                if (!SkipOnClient()) return true;
+
+                // Client: run only essential visual/flag updates.
+                // Skip fuel consumption, power generation, and waste emission
+                // (those are synced from host via EnergyGeneratorSyncer).
+
+                __instance.CheckConnectionStatus();
+
+                if (__instance.hasMeter && __instance.formula.inputs != null && __instance.formula.inputs.Length > 0)
+                {
+                    var inputItem = __instance.formula.inputs[0];
+                    float positionPercent = __instance.storage.GetMassAvailable(inputItem.tag) / inputItem.maxStoredMass;
+                    __instance.meter?.SetPositionPercent(positionPercent);
+                }
+
+                ushort circuitID = __instance.CircuitID;
+                __instance.operational.SetFlag(Generator.wireConnectedFlag, circuitID != ushort.MaxValue);
+
+                return false;
             }
         }
 

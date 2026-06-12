@@ -13,7 +13,7 @@ namespace ONI_Together.Networking.Components.StructureStateSyncers
 
         protected override void Initialize()
         {
-            generator = new Generator();
+            generator = GetComponent<Generator>();
         }
 
         protected override void SampleState(out Variant value, out bool active, out Dictionary<string, Variant> optionalValues)
