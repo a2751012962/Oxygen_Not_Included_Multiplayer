@@ -230,13 +230,82 @@ namespace ONI_Together.Misc
 
             return cells.ToArray();
         }
-        
+
         /// <summary>
-        /// Decodes a single 13-cell uints chunk into an int[] of Grid cell indices.
-        /// Reads firstCell from the lower FIRST_CELL_BITS bits, then reconstructs cells
-        /// by walking direction-run segments (each: 2-bit dir, 2-bit len-1) from bits 17-30.
+        /// Encodes a utility build path into an array of 64-bit chunks. Lower 32 bits = path data
+        /// (same as EncodeUtilityPath). Upper 32 bits = validity bitmask (bits 0-12 for up to 13 cells).
         /// </summary>
-        private static int[] DecodeUtilityPathChunk(uint data)
+        public static ulong[] EncodeUtilityPathWithValidity(List<BaseUtilityBuildTool.PathNode> path)
+        {
+            if (path == null || path.Count <= 1)
+                return null;
+
+            List<ulong> chunks = new List<ulong>();
+            int pos = 0;
+            int count = path.Count;
+
+            while (pos < count)
+            {
+                int chunkEnd = pos + 13;
+                if (chunkEnd > count)
+                    chunkEnd = count;
+
+                uint validityMask = 0;
+                for (int j = pos; j < chunkEnd; j++)
+                {
+                    if (path[j].valid)
+                        validityMask |= 1u << (j - pos);
+                }
+
+                int firstCell = path[pos].cell;
+                uint data = (uint)(firstCell & 0x1FFFF);
+
+                int segmentsPacked = 0;
+                int segmentCount = 0;
+                int i = pos + 1;
+
+                while (i < chunkEnd && segmentCount < 3)
+                {
+                    int from = path[i - 1].cell;
+                    int to = path[i].cell;
+                    UtilityConnections dir = UtilityConnectionsExtensions.DirectionFromToCell(from, to);
+                    if (dir == (UtilityConnections)0)
+                        break;
+
+                    int dirIndex;
+                    if (dir == UtilityConnections.Right) dirIndex = 0;
+                    else if (dir == UtilityConnections.Up) dirIndex = 1;
+                    else if (dir == UtilityConnections.Left) dirIndex = 2;
+                    else dirIndex = 3;
+
+                    int len = 1;
+                    i++;
+                    while (i < chunkEnd && len < 4)
+                    {
+                        int prev = path[i - 1].cell;
+                        int curr = path[i].cell;
+                        if (UtilityConnectionsExtensions.DirectionFromToCell(prev, curr) != dir)
+                            break;
+                        len++;
+                        i++;
+                    }
+
+                    int seg = (dirIndex & 0x3) | (((len - 1) & 0x3) << 2);
+                    segmentsPacked |= seg << (segmentCount * 4);
+                    segmentCount++;
+                }
+
+                data |= (uint)(segmentsPacked & 0xFFF) << 17;
+                data |= (uint)(segmentCount & 0x3) << 29;
+
+                chunks.Add(((ulong)validityMask << 32) | data);
+                pos = i;
+            }
+
+            return chunks.ToArray();
+        }
+
+        public static int[] DecodeUtilityPathChunk(uint data)
         {
             if (data == 0)
                 return null;

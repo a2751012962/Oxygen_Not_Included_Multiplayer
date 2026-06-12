@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using ONI_Together.DebugTools;
+using ONI_Together.Misc;
 using ONI_Together.Networking.Packets.Architecture;
 using Steamworks;
 using System.Collections.Generic;
@@ -22,30 +23,11 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 		/// </summary>
 		public static bool ProcessingIncoming { get; private set; } = false;
 
-		public List<BaseUtilityBuildTool.PathNode> path = [];
+		public ulong[] PathChunks;
 		public List<string> MaterialTags = [];
 		public string PrefabID, FacadeID;
 		public PrioritySetting Priority;
 		public bool InstantBuild;
-
-		static void SerializePathNode(ref BinaryWriter writer, ref BaseUtilityBuildTool.PathNode node)
-		{
-			using var _ = Profiler.Scope();
-
-			writer.Write(node.cell);
-			writer.Write(node.valid);
-		}
-		void DeserializePathNode(ref BinaryReader reader, ref List<BaseUtilityBuildTool.PathNode> toAdd)
-		{
-			using var _ = Profiler.Scope();
-
-			var node = new BaseUtilityBuildTool.PathNode
-			{
-				cell = reader.ReadInt32(),
-				valid = reader.ReadBoolean()
-			};
-			toAdd.Add(node);
-		}
 
 		public UtilityBuildPacket() { }
 
@@ -54,7 +36,7 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 			using var _ = Profiler.Scope();
 
 			PrefabID = prefabId ?? string.Empty;
-			path = nodes ?? [];
+			PathChunks = BuildingUtils.EncodeUtilityPathWithValidity(nodes ?? []);
 			MaterialTags = mats ?? [];
 			FacadeID = skin ?? string.Empty;
 			InstantBuild = instantBuild;
@@ -68,23 +50,15 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 
 			writer.Write(PrefabID);
 			writer.Write(FacadeID);
-			writer.Write(path.Count);
-			if (path.Any())
+			writer.Write(PathChunks?.Length ?? 0);
+			if (PathChunks != null)
 			{
-				for(int i = 0; i < path.Count; i++)
-				{
-					var node = path[i];
-					SerializePathNode(ref writer, ref node);
-				}
+				for (int i = 0; i < PathChunks.Length; i++)
+					writer.Write(PathChunks[i]);
 			}
 			writer.Write(MaterialTags.Count);
-			if (MaterialTags.Any())
-			{
-				foreach (var tag in MaterialTags)
-				{
-					writer.Write(tag);
-				}
-			}
+			foreach (var tag in MaterialTags)
+				writer.Write(tag);
 			writer.Write((int)Priority.priority_class);
 			writer.Write(Priority.priority_value);
 			writer.Write(InstantBuild);
@@ -95,53 +69,36 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 		{
 			using var _ = Profiler.Scope();
 
-			//DebugConsole.Log("[UtilityBuildPacket] Deserializing UtilityBuildPacket");
-			//DebugConsole.Log("[UtilityBuildPacket] Reading PrefabID...");
 			PrefabID = reader.ReadString();
-			//DebugConsole.Log("[UtilityBuildPacket] PrefabID read successfully: "+PrefabID);
-			//DebugConsole.Log("[UtilityBuildPacket] Reading FacadeID...");
 			FacadeID = reader.ReadString();
-			//DebugConsole.Log("[UtilityBuildPacket] FacadeID read successfully: " + FacadeID);
-			//DebugConsole.Log("[UtilityBuildPacket] Reading path Count...");
-			int count = reader.ReadInt32();
-			if (count < 0 || count > MaxPathNodeCount)
+
+			int chunkCount = reader.ReadInt32();
+			if (chunkCount < 0 || chunkCount > MaxPathNodeCount)
 			{
-				DebugConsole.LogWarning($"[UtilityBuildPacket] Invalid path node count: {count}");
-				path = [];
+				DebugConsole.LogWarning($"[UtilityBuildPacket] Invalid chunk count: {chunkCount}");
+				PathChunks = null;
 				MaterialTags = [];
 				return;
 			}
-			//DebugConsole.Log("[UtilityBuildPacket] path Count read successfully: " + count);
-			path = new List<BaseUtilityBuildTool.PathNode>(count);
-			for (int i = 0; i < count; i++)
-			{
-				//DebugConsole.Log("[UtilityBuildPacket] Reading node at index "+i);
-				DeserializePathNode(ref reader, ref path);
-			}
-			//DebugConsole.Log("[UtilityBuildPacket] Reading matCount...");
+			PathChunks = new ulong[chunkCount];
+			for (int i = 0; i < chunkCount; i++)
+				PathChunks[i] = reader.ReadUInt64();
+
 			int matCount = reader.ReadInt32();
 			if (matCount < 0 || matCount > MaxMaterialTagCount)
 			{
 				DebugConsole.LogWarning($"[UtilityBuildPacket] Invalid material tag count: {matCount}");
-				path = [];
+				PathChunks = null;
 				MaterialTags = [];
 				return;
 			}
-			//DebugConsole.Log("[UtilityBuildPacket] matCount read successfully: " + matCount);
 			MaterialTags = new List<string>(matCount);
-			if (matCount > 0)
-			{
-				for (int i = 0; i < matCount; i++)
-				{
-					//DebugConsole.Log("[UtilityBuildPacket] Reading material at index " + i);
-					MaterialTags.Add(reader.ReadString());
-				}
-			}
-			//DebugConsole.Log("[UtilityBuildPacket] Reading Priority...");
+			for (int i = 0; i < matCount; i++)
+				MaterialTags.Add(reader.ReadString());
+
 			Priority = new PrioritySetting(
 					(PriorityScreen.PriorityClass)reader.ReadInt32(),
 					reader.ReadInt32());
-			//DebugConsole.Log("[UtilityBuildPacket] Priority read successfully: " + Priority.priority_class+" - "+Priority.priority_value);
 			InstantBuild = reader.ReadBoolean();
 		}
 
@@ -150,12 +107,35 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 			using var scope = Profiler.Scope();
 
 			DebugConsole.Log("[UtilityBuildPacket] OnDispatched");
-			if (path.Count == 0)
+			if (PathChunks == null || PathChunks.Length == 0)
 			{
 				DebugConsole.LogWarning("[UtilityBuildPacket] Received empty path, ignoring.");
 				return;
 			}
 
+			List<BaseUtilityBuildTool.PathNode> path = new List<BaseUtilityBuildTool.PathNode>();
+			for (int c = 0; c < PathChunks.Length; c++)
+			{
+				ulong chunk = PathChunks[c];
+				int[] chunkCells = BuildingUtils.DecodeUtilityPathChunk((uint)(chunk & 0xFFFFFFFF));
+				if (chunkCells == null) continue;
+
+				uint validityMask = (uint)(chunk >> 32);
+				for (int j = 0; j < chunkCells.Length; j++)
+				{
+					path.Add(new BaseUtilityBuildTool.PathNode
+					{
+						cell = chunkCells[j],
+						valid = (validityMask & (1u << j)) != 0
+					});
+				}
+			}
+
+			if (path.Count == 0)
+			{
+				DebugConsole.LogWarning("[UtilityBuildPacket] Decoded empty path, ignoring.");
+				return;
+			}
 
 			var def = Assets.GetBuildingDef(PrefabID);
 			if (def == null)
@@ -174,9 +154,7 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 
 			if(PlanScreen.Instance?.ProductInfoScreen?.materialSelectionPanel?.PriorityScreen == null)
 			{
-				//DebugConsole.LogWarning("[UtilityBuildPacket] PlanScreen or PriorityScreen is null, opening PlanScreen to initialize.");
 				PlanScreen.Instance.CopyBuildingOrder(def,FacadeID);
-				//DebugConsole.LogWarning("[UtilityBuildPacket] Planscreen initialized, closing it again");
 				PlanScreen.Instance.OnActiveToolChanged(SelectTool.Instance);
 			}
 
@@ -189,7 +167,7 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 			IHaveUtilityNetworkMgr conduitManagerHaver = def.BuildingComplete.GetComponent<IHaveUtilityNetworkMgr>();
 
 			tool.def = def;
-			tool.path = this.path;
+			tool.path = path;
 			tool.selectedElements = selected_elements;
 			tool.conduitMgr = conduitManagerHaver.GetNetworkManager();
 
@@ -198,7 +176,6 @@ namespace ONI_Together.Networking.Packets.Tools.Build
 			DebugHandler.InstantBuildMode = InstantBuild;
 			try
 			{
-				//DebugConsole.Log($"[UtilityBuildPacket] Building path with {path.Count} nodes of prefab {def.PrefabID}");
 				tool.BuildPath();
 
 				foreach (BaseUtilityBuildTool.PathNode node in path)
