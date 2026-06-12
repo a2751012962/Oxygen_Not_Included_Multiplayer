@@ -207,7 +207,7 @@ namespace ONI_Together.Networking.Components
         public void Register(GameObject go)
         {
             if (go.IsNullOrDestroyed()) return;
-            if (!MultiplayerSession.SessionHasPlayers) return;
+            //if (!MultiplayerSession.SessionHasPlayers) return;
 
             var identity = go.GetNetIdentity();
             if (identity == null || identity.NetId == 0) return;
