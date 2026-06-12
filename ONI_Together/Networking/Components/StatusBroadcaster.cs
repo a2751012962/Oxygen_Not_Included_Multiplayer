@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace ONI_Together.Networking.Components
 {
-    public class EntityStatusBroadcaster : KMonoBehaviour, IRender200ms
+    public class StatusBroadcaster : KMonoBehaviour, IRender200ms
     {
         public static readonly HashSet<int> SubscribedNetIds = new();
         public static readonly HashSet<int> PendingImmediate = new();

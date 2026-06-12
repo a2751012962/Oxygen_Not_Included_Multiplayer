@@ -61,6 +61,7 @@ namespace ONI_Together.Networking.Components
 
             StatusItem original = recieverType switch
             {
+                StatusRecieverType.DUPLICANT => Db.Get().DuplicantStatusItems.TryGet(entry.ItemId),
                 StatusRecieverType.CREATURE => Db.Get().CreatureStatusItems.TryGet(entry.ItemId),
                 StatusRecieverType.MISC => Db.Get().MiscStatusItems.TryGet(entry.ItemId),
                 StatusRecieverType.BUILDING => Db.Get().BuildingStatusItems.TryGet(entry.ItemId),

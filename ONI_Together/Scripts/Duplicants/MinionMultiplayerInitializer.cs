@@ -76,7 +76,7 @@ namespace ONI_Together.Scripts.Duplicants
 		{
 			go.AddOrGet<DuplicantStateSender>();
 			go.AddOrGet<DuplicantChoreBroadcaster>();
-			go.AddOrGet<EntityStatusBroadcaster>();
+			go.AddOrGet<StatusBroadcaster>();
 		}
 	}
 }

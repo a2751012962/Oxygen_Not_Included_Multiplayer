@@ -35,7 +35,7 @@ namespace ONI_Together.Patches.Critters
 					
 					var statusReceiver = __result.AddOrGet<ClientReceiver_StatusItems>();
 					statusReceiver.recieverType = ClientReceiver_StatusItems.StatusRecieverType.CREATURE;
-					__result.AddOrGet<EntityStatusBroadcaster>();
+					__result.AddOrGet<StatusBroadcaster>();
 				}
 				catch (Exception ex)
 				{

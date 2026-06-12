@@ -36,7 +36,7 @@ namespace ONI_Together.Patches.GamePatches
                 _subscribedNetId = identity.NetId;
                 PacketSender.SendToHost(new StatusItemsSubscribePacket
                 {
-                    DupeNetId = _subscribedNetId,
+                    NetId = _subscribedNetId,
                     Subscribe = true
                 });
             }
@@ -46,7 +46,7 @@ namespace ONI_Together.Patches.GamePatches
                 if (_subscribedNetId == 0) return;
                 PacketSender.SendToHost(new StatusItemsSubscribePacket
                 {
-                    DupeNetId = _subscribedNetId,
+                    NetId = _subscribedNetId,
                     Subscribe = false
                 });
                 _subscribedNetId = 0;

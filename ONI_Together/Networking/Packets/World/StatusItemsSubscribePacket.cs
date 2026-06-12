@@ -7,20 +7,20 @@ namespace ONI_Together.Networking.Packets.World
 {
     public class StatusItemsSubscribePacket : IPacket
     {
-        public int DupeNetId;
+        public int NetId;
         public bool Subscribe;
 
         public void Serialize(BinaryWriter writer)
         {
             using var _ = Profiler.Scope();
-            writer.Write(DupeNetId);
+            writer.Write(NetId);
             writer.Write(Subscribe);
         }
 
         public void Deserialize(BinaryReader reader)
         {
             using var _ = Profiler.Scope();
-            DupeNetId = reader.ReadInt32();
+            NetId = reader.ReadInt32();
             Subscribe = reader.ReadBoolean();
         }
 
@@ -30,13 +30,13 @@ namespace ONI_Together.Networking.Packets.World
             if (!MultiplayerSession.IsHost) return;
             if (Subscribe)
             {
-                EntityStatusBroadcaster.SubscribedNetIds.Add(DupeNetId);
-                EntityStatusBroadcaster.PendingImmediate.Add(DupeNetId);
+                StatusBroadcaster.SubscribedNetIds.Add(NetId);
+                StatusBroadcaster.PendingImmediate.Add(NetId);
             }
             else
             {
-                EntityStatusBroadcaster.SubscribedNetIds.Remove(DupeNetId);
-                EntityStatusBroadcaster.PendingImmediate.Remove(DupeNetId);
+                StatusBroadcaster.SubscribedNetIds.Remove(NetId);
+                StatusBroadcaster.PendingImmediate.Remove(NetId);
             }
         }
     }
