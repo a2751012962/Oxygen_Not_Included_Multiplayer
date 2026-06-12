@@ -57,7 +57,20 @@ namespace ONI_Together.Networking
 						{ CursorState.EMPTY_PIPE, 0.36f },
 						{ CursorState.DISCONNECT, 0.36f },
 						{ CursorState.CLEAR_FLOOR, 0.36f },
-						{ CursorState.MOVE_TO, 0.36f }
+						{ CursorState.MOVE_TO, 0.36f },
+						// Sandbox tools
+						{ CursorState.SANDBOX_BRUSH, 0.36f },
+						{ CursorState.SANDBOX_SPRINKLE, 0.36f },
+						{ CursorState.SANDBOX_FLOOD, 0.36f },
+						{ CursorState.SANDBOX_SAMPLE, 0.36f },
+						{ CursorState.SANDBOX_HEAT, 0.36f },
+						{ CursorState.SANDBOX_STRESS, 0.36f },
+						{ CursorState.SANDBOX_SPAWN, 0.36f },
+						{ CursorState.SANDBOX_DESTROY, 0.36f },
+						{ CursorState.SANDBOX_REVEAL, 0.36f },
+						{ CursorState.SANDBOX_CLEAR_FLOOR, 0.36f },
+						{ CursorState.SANDBOX_CRITTER, 0.36f },
+						{ CursorState.SANDBOX_STORY_TRAIT, 0.36f }
 				};
 
 
@@ -265,6 +278,19 @@ namespace ONI_Together.Networking
 				case CursorState.CLEAR_FLOOR: return "icon_action_store";
 				case CursorState.MOVE_TO: return "icon_action_moveto";
 				case CursorState.DISCONNECT: return "icon_action_disconnect";
+				// Sandbox tools
+				case CursorState.SANDBOX_BRUSH: return "brush";
+				case CursorState.SANDBOX_SPRINKLE: return "sprinkle";
+				case CursorState.SANDBOX_FLOOD: return "flood";
+				case CursorState.SANDBOX_SAMPLE: return "sample";
+				case CursorState.SANDBOX_HEAT: return "temperature";
+				case CursorState.SANDBOX_STRESS: return "crew_state_happy";
+				case CursorState.SANDBOX_SPAWN: return "spawn";
+				case CursorState.SANDBOX_DESTROY: return "destroy";
+				case CursorState.SANDBOX_REVEAL: return "reveal";
+				case CursorState.SANDBOX_CLEAR_FLOOR: return "clear_floor";
+				case CursorState.SANDBOX_CRITTER: return "critter";
+				case CursorState.SANDBOX_STORY_TRAIT: return "sandbox_storytrait";
 				default: return $"[{state.ToString()}]";
 			}
 		}

@@ -20,6 +20,19 @@
 		EMPTY_PIPE,    // Empty contents of pipes
 		DISCONNECT,    // Disconnect wires, pipes etc
 		CLEAR_FLOOR,   // Mark debris for removal
-		MOVE_TO        // Direct duplicants to move
+		MOVE_TO,        // Direct duplicants to move
+		// Sandbox tools
+		SANDBOX_BRUSH,
+		SANDBOX_SPRINKLE,
+		SANDBOX_FLOOD,
+		SANDBOX_SAMPLE,
+		SANDBOX_HEAT,
+		SANDBOX_STRESS,
+		SANDBOX_SPAWN,
+		SANDBOX_DESTROY,
+		SANDBOX_REVEAL,
+		SANDBOX_CLEAR_FLOOR,
+		SANDBOX_CRITTER,
+		SANDBOX_STORY_TRAIT
 	}
 }

@@ -38,95 +38,94 @@ namespace ONI_Together.Networking.Packets.Core
         public int ViewMinX, ViewMinY, ViewMaxX, ViewMaxY;
 
         public void Serialize(BinaryWriter writer)
-        {
-            using var _ = Profiler.Scope();
+		{
+		    using var _ = Profiler.Scope();
 
-            writer.Write(PlayerID);
-            writer.Write(Position);
-            writer.Write(Color);
+		    writer.Write(PlayerID);
+		    writer.Write(Position);
+		    writer.Write(Color);
 
-            ushort flags = 0;
-            flags |= (ushort)((int)CursorState & 0xF);
-            flags |= (ushort)(((int)BuildingOrientation & 0x7) << 4);
-            flags |= (ushort)(((int)DragMode & 0x7) << 7);
+		    ushort flags = 0;
+		    flags |= (ushort)((int)CursorState & 0x1F);
+		    flags |= (ushort)(((int)BuildingOrientation & 0x7) << 5);
+		    flags |= (ushort)(((int)DragMode & 0x7) << 8);
 
-            if (BuildingAllowed)
-                flags |= 1 << 10;
+		    if (BuildingAllowed)
+		        flags |= 1 << 11;
 
-            if (Dragging)
-                flags |= 1 << 11;
+		    if (Dragging)
+		        flags |= 1 << 12;
 
-            if (HasUtilityPath)
-                flags |= 1 << 12;
+		    if (HasUtilityPath)
+		        flags |= 1 << 13;
 
-            writer.Write(flags);
+		    writer.Write(flags);
 
-            uint viewMin = ((uint)(ushort)ViewMinX << 16) | (ushort)ViewMinY;
-            uint viewMax = ((uint)(ushort)ViewMaxX << 16) | (ushort)ViewMaxY;
+		    uint viewMin = ((uint)(ushort)ViewMinX << 16) | (ushort)ViewMinY;
+		    uint viewMax = ((uint)(ushort)ViewMaxX << 16) | (ushort)ViewMaxY;
 
-            writer.Write(viewMin);
-            writer.Write(viewMax);
+		    writer.Write(viewMin);
+		    writer.Write(viewMax);
 
-            writer.Write(BuildingPrefabId);
+		    writer.Write(BuildingPrefabId);
 
-            if (Dragging)
-            {
-                writer.Write(AreaDownPos);
-                writer.Write(LengthLimit);
-            }
+		    if (Dragging)
+		    {
+		        writer.Write(AreaDownPos);
+		        writer.Write(LengthLimit);
+		    }
 
-            if (HasUtilityPath)
-            {
-                writer.Write(UtilityPathData.Length);
-                for (int i = 0; i < UtilityPathData.Length; i++)
-                    writer.Write(UtilityPathData[i]);
-            }
-        }
+		    if (HasUtilityPath)
+		    {
+		        writer.Write(UtilityPathData.Length);
+		        for (int i = 0; i < UtilityPathData.Length; i++)
+		            writer.Write(UtilityPathData[i]);
+		    }
+		}
 
-        public void Deserialize(BinaryReader reader)
-        {
-            using var _ = Profiler.Scope();
+		public void Deserialize(BinaryReader reader)
+		{
+		    using var _ = Profiler.Scope();
 
-            PlayerID = reader.ReadUInt64();
-            Position = reader.ReadVector3();
-            Color = reader.ReadColor();
+		    PlayerID = reader.ReadUInt64();
+		    Position = reader.ReadVector3();
+		    Color = reader.ReadColor();
 
-            ushort flags = reader.ReadUInt16();
-            CursorState = (CursorState)(flags & 0xF);
-            BuildingOrientation = (Orientation)((flags >> 4) & 0x7);
-            DragMode = (DragTool.Mode)((flags >> 7) & 0x7);
-            BuildingAllowed = (flags & (1 << 10)) != 0;
-            Dragging = (flags & (1 << 11)) != 0;
-            HasUtilityPath = (flags & (1 << 12)) != 0;
+		    ushort flags = reader.ReadUInt16();
+		    CursorState = (CursorState)(flags & 0x1F);
+		    BuildingOrientation = (Orientation)((flags >> 5) & 0x7);
+		    DragMode = (DragTool.Mode)((flags >> 8) & 0x7);
+		    BuildingAllowed = (flags & (1 << 11)) != 0;
+		    Dragging = (flags & (1 << 12)) != 0;
+		    HasUtilityPath = (flags & (1 << 13)) != 0;
 
-            uint viewMin = reader.ReadUInt32();
-            uint viewMax = reader.ReadUInt32();
+		    uint viewMin = reader.ReadUInt32();
+		    uint viewMax = reader.ReadUInt32();
 
-            ViewMinX = (short)(viewMin >> 16);
-            ViewMinY = (short)(viewMin & 0xFFFF);
+		    ViewMinX = (short)(viewMin >> 16);
+		    ViewMinY = (short)(viewMin & 0xFFFF);
 
-            ViewMaxX = (short)(viewMax >> 16);
-            ViewMaxY = (short)(viewMax & 0xFFFF);
+		    ViewMaxX = (short)(viewMax >> 16);
+		    ViewMaxY = (short)(viewMax & 0xFFFF);
 
-            BuildingPrefabId = reader.ReadString();
+		    BuildingPrefabId = reader.ReadString();
 
-            if (Dragging)
-            {
-                AreaDownPos = reader.ReadVector3();
-                LengthLimit = reader.ReadVector2();
-            }
+		    if (Dragging)
+		    {
+		        AreaDownPos = reader.ReadVector3();
+		        LengthLimit = reader.ReadVector2();
+		    }
 
-            if (HasUtilityPath)
-            {
-                int count = reader.ReadInt32();
-                UtilityPathData = new uint[count];
-                for (int i = 0; i < count; i++)
-                    UtilityPathData[i] = reader.ReadUInt32();
-            }
-            else
-                UtilityPathData = null;
-        }
-
+		    if (HasUtilityPath)
+		    {
+		        int count = reader.ReadInt32();
+		        UtilityPathData = new uint[count];
+		        for (int i = 0; i < count; i++)
+		            UtilityPathData[i] = reader.ReadUInt32();
+		    }
+		    else
+		        UtilityPathData = null;
+		}
         public void OnDispatched()
 		{
 			using var _ = Profiler.Scope();

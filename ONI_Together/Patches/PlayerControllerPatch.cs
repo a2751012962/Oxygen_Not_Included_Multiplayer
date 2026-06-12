@@ -84,6 +84,43 @@ namespace ONI_Together.Patches
 				case "DisconnectTool":
 					CursorManager.Instance.cursorState = CursorState.DISCONNECT;
 					break;
+				// Sandbox tools
+				case "SandboxBrushTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_BRUSH;
+					break;
+				case "SandboxSprinkleTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_SPRINKLE;
+					break;
+				case "SandboxFloodTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_FLOOD;
+					break;
+				case "SandboxSampleTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_SAMPLE;
+					break;
+				case "SandboxHeatTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_HEAT;
+					break;
+				case "SandboxStressTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_STRESS;
+					break;
+				case "SandboxSpawnerTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_SPAWN;
+					break;
+				case "SandboxDestroyerTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_DESTROY;
+					break;
+				case "SandboxFOWTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_REVEAL;
+					break;
+				case "SandboxClearFloorTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_CLEAR_FLOOR;
+					break;
+				case "SandboxCritterTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_CRITTER;
+					break;
+				case "SandboxStoryTraitTool":
+					CursorManager.Instance.cursorState = CursorState.SANDBOX_STORY_TRAIT;
+					break;
 				default:
 					CursorManager.Instance.cursorState = CursorState.NONE;
 					break;
