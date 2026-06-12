@@ -13,7 +13,7 @@ namespace ONI_Together.Networking.Components
         public static readonly HashSet<int> PendingImmediate = new();
 
         private const float SoftSyncInterval = 0.5f;
-        private const float HardSyncInterval = 10f;
+        private const float HardSyncInterval = 5f;
 
         [MyCmpGet] private NetworkIdentity identity;
         [MyCmpGet] private KSelectable selectable;
