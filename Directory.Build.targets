@@ -85,17 +85,19 @@
 	<!--Create folder for publicized dlls if not existing-->
 	<Target Name="PubliciseMKDIR"
 		BeforeTargets="Publicise"
+		Condition="'$(DoNotBuildAsMod)' != 'true'"
 		>
 		<MakeDir Directories="$(SolutionDir)\PublicisedAssembly"/>
 	</Target>
 
 	<!--Creates publicized dlls from the game dlls-->
-	<ItemGroup>
+	<ItemGroup Condition="'$(DoNotBuildAsMod)' != 'true'">
 		<PubliciseAssemblies       Include="Assembly-CSharp.dll;Assembly-CSharp-firstpass.dll;"/>
 		<PubliciseAssembliesInputs Include="@(PubliciseAssemblies->'$(GameLibsFolder)/%(Filename)%(Extension)')"/>
 	</ItemGroup>
 	<Target Name="Publicise"
 		BeforeTargets="BeforeResolveReferences"
+		Condition="'$(DoNotBuildAsMod)' != 'true'"
 		Inputs="@(PubliciseAssembliesInputs)"
 		Outputs="@(PubliciseAssembliesInputs->'$(SolutionDir)PublicisedAssembly\%(Filename)_public%(Extension)')"
 		>

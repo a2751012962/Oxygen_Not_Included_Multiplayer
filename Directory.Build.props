@@ -4,6 +4,7 @@
 	<Import Condition=" Exists('Directory.Build.props.user') " Project="Directory.Build.props.user" />
 
 	<PropertyGroup>
+		<SolutionDir Condition="'$(SolutionDir)' == '' Or '$(SolutionDir)' == '*Undefined*'">$(MSBuildThisFileDirectory)</SolutionDir>
 		<Optimize>true</Optimize>
 		<!--required when using publicizer or the game gets sad about mismatched access modifiers-->
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>

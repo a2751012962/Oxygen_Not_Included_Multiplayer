@@ -1,0 +1,34 @@
+name: Publish to NuGet
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build ONI_Together_API/ONI_Together_API.csproj -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack ONI_Together_API/ONI_Together_API.csproj -c Release --no-build -o nupkg
+
+      - name: Push
+        run: dotnet nuget push nupkg/*.nupkg --source https://api.nuget.org/v3/index.json

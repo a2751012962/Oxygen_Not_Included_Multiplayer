@@ -4,8 +4,28 @@
     <Nullable>enable</Nullable>
     <IsPacked>true</IsPacked>
     <DoNotBuildAsMod>true</DoNotBuildAsMod>
+
+    <PackageId>ONI_Together_API</PackageId>
+    <Authors>Lyraedan, Sgt_Imalas</Authors>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <Description>API for Integration with Oxygen Not Included Together</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Lyraedan/Oxygen_Not_Included_Together</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Lyraedan/Oxygen_Not_Included_Together</RepositoryUrl>
+    <PackageTags>oni;oxygen-not-included;oxygen-not-included-together;oxygen-not-included-multiplayer;oni-together;onitogether;oni-multiplayer</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeBuildOutput>true</IncludeBuildOutput>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(OutputPath)\*.dll" Pack="false" />
   </ItemGroup>
 </Project>
