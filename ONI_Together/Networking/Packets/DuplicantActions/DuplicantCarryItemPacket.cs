@@ -109,10 +109,8 @@ namespace ONI_Together.Networking.Packets.DuplicantActions
 			tracker.fadeOut = false;
 			tracker.forceAlwaysVisible = true;
 
-			// Now safe to activate — AnimFiles is already set
 			proxy.SetActive(true);
 
-			// Ensure the animation starts playing after activation
 			if (animData != null && animData.animCount > 0)
 			{
 				var firstAnim = animData.GetAnim(0);
