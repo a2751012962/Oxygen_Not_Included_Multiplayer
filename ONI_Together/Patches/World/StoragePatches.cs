@@ -2,6 +2,7 @@ using HarmonyLib;
 using ONI_Together.DebugTools;
 using ONI_Together.Networking;
 using ONI_Together.Networking.Components;
+using ONI_Together.Networking.Packets.DuplicantActions;
 using ONI_Together.Networking.Packets.World;
 using Shared.Profiling;
 using UnityEngine;
@@ -33,6 +34,22 @@ namespace ONI_Together.Patches.World
                     ConsumedPrefabHash = go.PrefabID().GetHashCode(),
                     ConsumedAmount = pe?.Mass ?? 0f
                 });
+
+                // If this is a duplicant's storage, notify clients to remove the carried item visual
+                if (__instance.GetComponent<MinionBrain>() != null)
+                {
+                    var goIdentity = go.GetNetIdentity();
+                    if (goIdentity != null && goIdentity.NetId != 0)
+                    {
+                        DebugConsole.Log($"[StorageRemovePatch] Sending put-down packet: dupe={storageIdentity.NetId} item={goIdentity.NetId} prefab={go.PrefabID()}");
+                        PacketSender.SendToAllClients(new DuplicantCarryItemPacket
+                        {
+                            NetId = storageIdentity.NetId,
+                            PickupableNetId = goIdentity.NetId,
+                            IsCarrying = false
+                        });
+                    }
+                }
             }
         }
 
@@ -71,6 +88,29 @@ namespace ONI_Together.Patches.World
                             ConsumedPrefabHash = go.PrefabID().GetHashCode(),
                             ConsumedAmount = pe?.Mass ?? 0
                         });
+
+                        // If this is a duplicant's storage, notify clients to show the item on their back
+                        if (__instance.GetComponent<MinionBrain>() != null)
+                        {
+                            var itemAnimCtrl = go.GetComponentInChildren<KBatchedAnimController>();
+                            var animFile = itemAnimCtrl?.AnimFiles?[0]?.name;
+                            if (animFile != null)
+                            {
+                                DebugConsole.Log($"[StorageStorePatch] Sending carry packet: dupe={storageIdentity.NetId} item={go.PrefabID()} anim={animFile}");
+                                PacketSender.SendToAllClients(new DuplicantCarryItemPacket
+                                {
+                                    NetId = storageIdentity.NetId,
+                                    PickupableNetId = identity.NetId,
+                                    AnimFileName = animFile,
+                                    ItemPrefabHash = go.PrefabID().GetHashCode(),
+                                    IsCarrying = true
+                                });
+                            }
+                            else
+                            {
+                                DebugConsole.LogWarning($"[StorageStorePatch] Item {go.PrefabID()} has no anim file (ctrl={itemAnimCtrl != null})");
+                            }
+                        }
                     }
                     else
                     {
