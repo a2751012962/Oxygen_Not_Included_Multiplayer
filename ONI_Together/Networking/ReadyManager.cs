@@ -116,14 +116,33 @@ namespace ONI_Together.Networking
 			string message = string.Format(STRINGS.UI.MP_OVERLAY.SYNC.WAITING_FOR_PLAYERS_SYNC, readyCount, maxPlayers);
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{
-				// The host is always considered ready; show that regardless of the stored
-				// flag so the line matches the count (which also treats the host as ready).
-				ClientReadyState displayState = player.PlayerId == MultiplayerSession.HostUserID
+				// Show the same readiness the count/gate use (host always reads ready).
+				ClientReadyState displayState = IsConsideredReady(player)
 					? ClientReadyState.Ready
-					: player.readyState;
+					: ClientReadyState.Unready;
 				message += $"{player.PlayerName}: {GetReadyText(displayState)}\n";
 			}
 			return message;
+		}
+
+		/// <summary>
+		/// Single source of truth for "is this player ready" used by the overlay text, the
+		/// ready count and the resume gate. The host is always considered ready regardless
+		/// of its stored flag.
+		///
+		/// NOTE: a disconnected client (Connection == null) is deliberately NOT skipped /
+		/// treated as ready. Clients drop their socket precisely *while loading the level*,
+		/// and the host must stay gated through that window — Connection == null cannot tell
+		/// "loading" apart from "crashed". A client that has truly left is removed from
+		/// ConnectedPlayers by the transport / Steam-lobby leave handlers, which clears the
+		/// gate; on a hard crash that removal is just delayed until lobby eviction.
+		/// </summary>
+		private static bool IsConsideredReady(MultiplayerPlayer player)
+		{
+			if (player.PlayerId == MultiplayerSession.HostUserID)
+				return true;
+
+			return player.readyState == ClientReadyState.Ready;
 		}
 
 		private static int GetReadyCount()
@@ -133,12 +152,8 @@ namespace ONI_Together.Networking
 			int count = 0;
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{
-				// The host is always considered ready regardless of its stored flag.
-				if (player.PlayerId == MultiplayerSession.HostUserID
-					|| player.readyState.Equals(ClientReadyState.Ready))
-				{
+				if (IsConsideredReady(player))
 					count++;
-				}
 			}
 			return count;
 		}
@@ -191,21 +206,12 @@ namespace ONI_Together.Networking
 		{
 			using var _ = Profiler.Scope();
 
-			bool result = true;
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{
-				// The host is always considered ready regardless of its stored flag.
-				if (player.PlayerId == MultiplayerSession.HostUserID)
-					continue;
-
-				if (player.readyState == ClientReadyState.Unready)
-				{
-					result = false;
-
-					break;
-				}
+				if (!IsConsideredReady(player))
+					return false;
 			}
-			return result;
+			return true;
 		}
 
 		internal static void RefreshReadyState()

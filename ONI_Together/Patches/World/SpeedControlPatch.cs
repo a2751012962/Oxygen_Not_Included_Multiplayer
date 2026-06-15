@@ -17,6 +17,9 @@ namespace ONI_Together.Patches
 		// avoid broadcasting a change that never actually happened locally. (Re-checking
 		// ResumeBlocked() in the postfix would be wrong for TogglePause: pausing while a
 		// client is unready is allowed and must still be broadcast.)
+		// Assumes non-reentrancy: SpeedControlScreen runs on the single game thread, so
+		// prefix→original→postfix completes before another patched call begins. A blocked
+		// call skips the original, so it can't trigger a nested SetSpeed/TogglePause.
 		private static bool _resumeBlockedThisCall = false;
 
 		// Authority gate: while in a session, the host must not resume/unpause the sim
