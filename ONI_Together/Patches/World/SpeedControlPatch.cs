@@ -26,13 +26,11 @@ namespace ONI_Together.Patches
 		// until every connected player is ready. Pausing is always allowed; only resume
 		// is blocked. IsSyncing lets remote-applied speed changes through.
 		//
-		// Coverage: this gate hooks the user-facing resume entry points — SetSpeed and
-		// TogglePause (the play buttons / spacebar). SpeedControlScreen.Unpause() is NOT
-		// patched. Nothing resumes via Unpause() today (the old auto-resume calls in
-		// AllClientsReadyPacket / HardSyncCompletePacket / SaveLoaderPatch are commented
-		// out), but any future code that resumes programmatically must route through this
-		// gate (check ReadyManager.CanHostResume()) or add an Unpause prefix here —
-		// otherwise it bypasses the safety.
+		// Coverage: this gate hooks all three local resume entry points — SetSpeed,
+		// TogglePause (play buttons / spacebar) and Unpause (direct/programmatic).
+		// Together with the host-side rejection of remote resume packets (see
+		// SpeedChangePacket.OnDispatched), the host's sim cannot resume while any player
+		// is unready, whoever initiates it.
 		private static bool ResumeBlocked()
 		{
 			if (IsSyncing) return false;
@@ -73,6 +71,24 @@ namespace ONI_Together.Patches
 				return false;
 			}
 			_resumeBlockedThisCall = false;
+			return true;
+		}
+
+		[HarmonyPatch(nameof(SpeedControlScreen.Unpause), new Type[] { typeof(bool) })]
+		[HarmonyPrefix]
+		public static bool Unpause_Prefix()
+		{
+			using var _ = Profiler.Scope();
+
+			// Defensive: keep the gate authoritative for direct/programmatic Unpause()
+			// calls too. No flag bookkeeping needed — Unpause has no broadcasting postfix
+			// here, and a blocked call simply doesn't resume. Legitimate resumes (all
+			// ready, or the IsSyncing mirror path) pass through.
+			if (ResumeBlocked())
+			{
+				DebugConsole.Log("[SpeedControl] Blocked Unpause: not all players are ready");
+				return false;
+			}
 			return true;
 		}
 
