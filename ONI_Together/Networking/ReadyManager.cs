@@ -116,7 +116,12 @@ namespace ONI_Together.Networking
 			string message = string.Format(STRINGS.UI.MP_OVERLAY.SYNC.WAITING_FOR_PLAYERS_SYNC, readyCount, maxPlayers);
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{
-				message += $"{player.PlayerName}: {GetReadyText(player.readyState)}\n";
+				// The host is always considered ready; show that regardless of the stored
+				// flag so the line matches the count (which also treats the host as ready).
+				ClientReadyState displayState = player.PlayerId == MultiplayerSession.HostUserID
+					? ClientReadyState.Ready
+					: player.readyState;
+				message += $"{player.PlayerName}: {GetReadyText(displayState)}\n";
 			}
 			return message;
 		}

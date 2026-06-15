@@ -12,6 +12,13 @@ namespace ONI_Together.Patches
 	{
 		public static bool IsSyncing = false;
 
+		// Set by the resume-gate prefixes when they block a call. Harmony still runs
+		// postfixes after a prefix returns false, so the matching postfix reads this to
+		// avoid broadcasting a change that never actually happened locally. (Re-checking
+		// ResumeBlocked() in the postfix would be wrong for TogglePause: pausing while a
+		// client is unready is allowed and must still be broadcast.)
+		private static bool _resumeBlockedThisCall = false;
+
 		// Authority gate: while in a session, the host must not resume/unpause the sim
 		// until every connected player is ready. Pausing is always allowed; only resume
 		// is blocked. IsSyncing lets remote-applied speed changes through.
@@ -31,10 +38,12 @@ namespace ONI_Together.Patches
 			// Setting a speed unpauses the sim — block it while players are not ready.
 			if (ResumeBlocked())
 			{
+				_resumeBlockedThisCall = true;
 				DebugConsole.Log("[SpeedControl] Blocked SetSpeed: not all players are ready");
 				ReadyManager.RefreshScreen();
 				return false;
 			}
+			_resumeBlockedThisCall = false;
 			return true;
 		}
 
@@ -47,10 +56,12 @@ namespace ONI_Together.Patches
 			// TogglePause only resumes when currently paused; pausing stays allowed.
 			if (__instance.IsPaused && ResumeBlocked())
 			{
+				_resumeBlockedThisCall = true;
 				DebugConsole.Log("[SpeedControl] Blocked TogglePause (resume): not all players are ready");
 				ReadyManager.RefreshScreen();
 				return false;
 			}
+			_resumeBlockedThisCall = false;
 			return true;
 		}
 
@@ -64,10 +75,9 @@ namespace ONI_Together.Patches
 			{
 				if (IsSyncing) return;
 
-				// Harmony still runs postfixes when a prefix returns false. If the resume
-				// gate blocked this SetSpeed, the local speed never changed — so don't
-				// broadcast it, or clients would resume while the host stays paused.
-				if (ResumeBlocked()) return;
+				// Prefix blocked this call — the local speed never changed, so don't
+				// broadcast it or clients would resume while the host stays paused.
+				if (_resumeBlockedThisCall) { _resumeBlockedThisCall = false; return; }
 
 				var packet = new SpeedChangePacket((SpeedChangePacket.SpeedState)Speed);
 
@@ -89,6 +99,10 @@ namespace ONI_Together.Patches
 			try
 			{
 				if (IsSyncing) return;
+
+				// Prefix blocked this resume — don't broadcast; the local pause state
+				// is unchanged. (Legitimate pauses are not blocked and still broadcast.)
+				if (_resumeBlockedThisCall) { _resumeBlockedThisCall = false; return; }
 
 				var speedState = __instance.IsPaused
 						? SpeedChangePacket.SpeedState.Paused
