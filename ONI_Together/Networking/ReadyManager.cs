@@ -116,9 +116,33 @@ namespace ONI_Together.Networking
 			string message = string.Format(STRINGS.UI.MP_OVERLAY.SYNC.WAITING_FOR_PLAYERS_SYNC, readyCount, maxPlayers);
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{
-				message += $"{player.PlayerName}: {GetReadyText(player.readyState)}\n";
+				// Show the same readiness the count/gate use (host always reads ready).
+				ClientReadyState displayState = IsConsideredReady(player)
+					? ClientReadyState.Ready
+					: ClientReadyState.Unready;
+				message += $"{player.PlayerName}: {GetReadyText(displayState)}\n";
 			}
 			return message;
+		}
+
+		/// <summary>
+		/// Single source of truth for "is this player ready" used by the overlay text, the
+		/// ready count and the resume gate. The host is always considered ready regardless
+		/// of its stored flag.
+		///
+		/// NOTE: a disconnected client (Connection == null) is deliberately NOT skipped /
+		/// treated as ready. Clients drop their socket precisely *while loading the level*,
+		/// and the host must stay gated through that window — Connection == null cannot tell
+		/// "loading" apart from "crashed". A client that has truly left is removed from
+		/// ConnectedPlayers by the transport / Steam-lobby leave handlers, which clears the
+		/// gate; on a hard crash that removal is just delayed until lobby eviction.
+		/// </summary>
+		private static bool IsConsideredReady(MultiplayerPlayer player)
+		{
+			if (player.PlayerId == MultiplayerSession.HostUserID)
+				return true;
+
+			return player.readyState == ClientReadyState.Ready;
 		}
 
 		private static int GetReadyCount()
@@ -128,10 +152,8 @@ namespace ONI_Together.Networking
 			int count = 0;
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{
-				if (player.readyState.Equals(ClientReadyState.Ready))
-				{
+				if (IsConsideredReady(player))
 					count++;
-				}
 			}
 			return count;
 		}
@@ -162,6 +184,21 @@ namespace ONI_Together.Networking
 		}
 
 		/// <summary>
+		/// The authority gate for resuming the sim. The host may only resume/unpause
+		/// when every connected player is ready. Outside a session there is nothing to
+		/// gate. This is the real safety — UI visibility must never permit resume.
+		/// </summary>
+		public static bool CanHostResume()
+		{
+			using var _ = Profiler.Scope();
+
+			if (!MultiplayerSession.InSession)
+				return true;
+
+			return IsEveryoneReady();
+		}
+
+		/// <summary>
 		/// HOST ONLY - Check if all connected clients are ready
 		/// </summary>
 		/// <returns></returns>
@@ -169,17 +206,12 @@ namespace ONI_Together.Networking
 		{
 			using var _ = Profiler.Scope();
 
-			bool result = true;
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{
-				if (player.readyState == ClientReadyState.Unready)
-				{
-					result = false;
-
-					break;
-				}
+				if (!IsConsideredReady(player))
+					return false;
 			}
-			return result;
+			return true;
 		}
 
 		internal static void RefreshReadyState()

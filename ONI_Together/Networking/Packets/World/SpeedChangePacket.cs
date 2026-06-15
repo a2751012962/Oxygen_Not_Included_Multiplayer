@@ -50,6 +50,19 @@ namespace ONI_Together.Networking.Packets.World
 			if (SpeedControlScreen.Instance == null)
 				return;
 
+			// Authority: the host must never apply a remote resume while a player is
+			// unready — even though this runs under IsSyncing. Without this, a client that
+			// originated a resume (its own SetSpeed/TogglePause isn't gated) would resume
+			// the host mid-load via this packet, bypassing the SpeedControlScreen gate.
+			// Pause packets are always honoured; only resume is rejected.
+			if (MultiplayerSession.IsHost
+				&& Speed != SpeedState.Paused
+				&& !ReadyManager.CanHostResume())
+			{
+				DebugConsole.Log("[SpeedChangePacket] Ignored remote resume: not all players are ready");
+				return;
+			}
+
 			SpeedControlScreen_SendSpeedPacketPatch.IsSyncing = true;
 			try
 			{
