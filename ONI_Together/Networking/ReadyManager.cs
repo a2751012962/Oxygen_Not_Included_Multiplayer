@@ -27,14 +27,20 @@ namespace ONI_Together.Networking
 		/// connect callbacks (which run on the main thread): freeze the world for the ready
 		/// screen and rebroadcast roster/ready state (show/hide + text) to everyone. The
 		/// caller is responsible for marking the (re)connecting player Unready first.
+		///
+		/// <paramref name="isHostLoopback"/> is true for the LAN host's own local client
+		/// connecting to its own server on start; in that case we skip the sim-pause (there
+		/// is no remote player to wait on) but still refresh the roster.
 		/// </summary>
-		public static void OnClientConnected()
+		public static void HandleClientConnected(bool isHostLoopback = false)
 		{
 			using var _ = Profiler.Scope();
 
-			// A joining client must not leave the rest of the table running while it loads:
-			// pause the sim (broadcast to all peers) so the ready screen freezes the world.
-			Utils.PauseSimForReadyScreen();
+			// A remote joining client must not leave the rest of the table running while it
+			// loads: pause the sim (broadcast to all peers) so the ready screen freezes the
+			// world. The host's own loopback connect must not pause the sim on host start.
+			if (!isHostLoopback)
+				Utils.PauseSimForReadyScreen();
 
 			// Host owns the roster/visibility: recompute and rebroadcast show/hide + text.
 			RefreshScreen();

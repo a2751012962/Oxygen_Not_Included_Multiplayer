@@ -157,7 +157,7 @@ namespace ONI_Together.Networking.Transport.Lan
             AddClientToList(e.Client.Id);
             DebugConsole.Log($"New client connected: {clientId}");
 
-            ReadyManager.OnClientConnected();
+            ReadyManager.HandleClientConnected(clientId == CLIENT_ID);
         }
 
         private void ServerOnClientDisconnected(object sender, ServerDisconnectedEventArgs e)
