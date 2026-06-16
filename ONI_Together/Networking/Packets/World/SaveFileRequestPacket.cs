@@ -9,7 +9,6 @@ using System.Collections;
 using System.IO;
 using Shared.Profiling;
 
-
 namespace ONI_Together.Networking.Packets.World
 {
 	public class SaveFileRequestPacket : IPacket

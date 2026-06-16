@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using ONI_Together.DebugTools;
-using ONI_Together.Misc;
 using ONI_Together.Networking.Packets.Architecture;
 using Shared.Profiling;
 using ONI_Together.Networking.States;
@@ -243,13 +242,7 @@ namespace ONI_Together.Networking.Transport.Steam
 
             DebugConsole.Log($"[GameServer] Connection to {clientId} fully established!");
 
-            // A joining client must not leave the rest of the table running while it loads:
-            // pause the sim (broadcast to all peers) so the ready screen freezes the world.
-            Utils.PauseSimForReadyScreen();
-
-            // Host owns the roster/visibility: recompute and rebroadcast show/hide + text.
-            ReadyManager.RefreshScreen();
-            ReadyManager.RefreshReadyState();
+            ReadyManager.OnClientConnected();
             //SaveFileRequestPacket.SendSaveFile(clientId); // Old method
             //GoogleDriveUtils.UploadAndSendToClient(clientId); // Upload to googledrive and send to the client
         }

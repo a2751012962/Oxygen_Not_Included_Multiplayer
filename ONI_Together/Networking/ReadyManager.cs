@@ -22,6 +22,25 @@ namespace ONI_Together.Networking
 			SteamLobby.OnLobbyMembersRefreshed += UpdateReadyStateTracking;
 		}
 
+		/// <summary>
+		/// HOST - shared "a client (re)connected" resync, invoked from both transports'
+		/// connect callbacks (which run on the main thread): freeze the world for the ready
+		/// screen and rebroadcast roster/ready state (show/hide + text) to everyone. The
+		/// caller is responsible for marking the (re)connecting player Unready first.
+		/// </summary>
+		public static void OnClientConnected()
+		{
+			using var _ = Profiler.Scope();
+
+			// A joining client must not leave the rest of the table running while it loads:
+			// pause the sim (broadcast to all peers) so the ready screen freezes the world.
+			Utils.PauseSimForReadyScreen();
+
+			// Host owns the roster/visibility: recompute and rebroadcast show/hide + text.
+			RefreshScreen();
+			RefreshReadyState();
+		}
+
 		public static void SendAllReadyPacket()
 		{
 			using var _ = Profiler.Scope();
