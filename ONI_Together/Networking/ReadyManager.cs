@@ -30,9 +30,11 @@ namespace ONI_Together.Networking
 		///
 		/// <paramref name="isHostLoopback"/> is true for the LAN host's own local client
 		/// connecting to its own server on start; in that case we skip the sim-pause (there
-		/// is no remote player to wait on) but still refresh the roster.
+		/// is no remote player to wait on) but still refresh the roster. The flag is required
+		/// (no default) so every transport must consciously decide whether its connection can
+		/// be a host loopback rather than silently inheriting the "remote" behaviour.
 		/// </summary>
-		public static void HandleClientConnected(bool isHostLoopback = false)
+		public static void HandleClientConnected(bool isHostLoopback)
 		{
 			using var _ = Profiler.Scope();
 

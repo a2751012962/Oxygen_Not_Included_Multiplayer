@@ -244,7 +244,7 @@ namespace ONI_Together.Networking.Transport.Steam
 
             // Steam P2P: the host is never added through this remote-connection path, so
             // this is always a remote client — no host-loopback case to exclude.
-            ReadyManager.HandleClientConnected();
+            ReadyManager.HandleClientConnected(isHostLoopback: false);
             //SaveFileRequestPacket.SendSaveFile(clientId); // Old method
             //GoogleDriveUtils.UploadAndSendToClient(clientId); // Upload to googledrive and send to the client
         }
