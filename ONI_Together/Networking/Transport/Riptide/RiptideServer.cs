@@ -157,7 +157,13 @@ namespace ONI_Together.Networking.Transport.Lan
             AddClientToList(e.Client.Id);
             DebugConsole.Log($"New client connected: {clientId}");
 
-            ReadyManager.HandleClientConnected(clientId == CLIENT_ID);
+            // Host loopback = the one connect that happens *before* InSession flips true
+            // (it's the host's own local client, whose OnLocalClientConnected then sets
+            // InSession). Every remote join happens after that. NOTE: we can't use
+            // `clientId == CLIENT_ID` here — CLIENT_ID is only assigned in
+            // OnLocalClientConnected, which fires *after* this server-side accept, so it's
+            // still 0 at this point for the loopback.
+            ReadyManager.HandleClientConnected(isHostLoopback: !MultiplayerSession.InSession);
         }
 
         private void ServerOnClientDisconnected(object sender, ServerDisconnectedEventArgs e)

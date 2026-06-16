@@ -475,6 +475,12 @@ namespace ONI_Together.Misc
         {
 	        using var _ = Profiler.Scope();
 
+	        // Mirror the InSession guard that RefreshScreen/RefreshReadyState already use, so a
+	        // connect that happens before the session is established (the host's own loopback
+	        // client on LAN host-start) can never pause the sim — independent of how the caller
+	        // computes its loopback flag.
+	        if (!MultiplayerSession.InSession) return;
+
 	        PauseSimIfRunning();
         }
 
