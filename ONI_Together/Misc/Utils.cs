@@ -460,6 +460,13 @@ namespace ONI_Together.Misc
         /// ready screen reflects a frozen world for everyone. Unlike PauseSimOnPlayerLeft
         /// this is intentionally unconditional (not gated by PauseSimOnPlayerDisconnect):
         /// the ready screen must freeze the world for correctness regardless of host prefs.
+        ///
+        /// Note: this only broadcasts a pause when the host is currently *running* (see the
+        /// !IsPaused guard in PauseSimIfRunning). If the host is already paused, no pause
+        /// packet is sent — the "freeze everyone" guarantee therefore assumes clients already
+        /// mirror the host's paused state (true in normal flow, since client speed tracks the
+        /// host via SpeedChangePacket); it does not retroactively correct a pre-existing
+        /// client/host speed desync.
         /// </summary>
         public static void PauseSimForReadyScreen()
         {
