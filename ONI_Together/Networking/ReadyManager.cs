@@ -22,6 +22,33 @@ namespace ONI_Together.Networking
 			SteamLobby.OnLobbyMembersRefreshed += UpdateReadyStateTracking;
 		}
 
+		/// <summary>
+		/// HOST - shared "a client (re)connected" resync, invoked from both transports'
+		/// connect callbacks (which run on the main thread): freeze the world for the ready
+		/// screen and rebroadcast roster/ready state (show/hide + text) to everyone. The
+		/// caller is responsible for marking the (re)connecting player Unready first.
+		///
+		/// <paramref name="isHostLoopback"/> is true for the LAN host's own local client
+		/// connecting to its own server on start; in that case we skip the sim-pause (there
+		/// is no remote player to wait on) but still refresh the roster. The flag is required
+		/// (no default) so every transport must consciously decide whether its connection can
+		/// be a host loopback rather than silently inheriting the "remote" behaviour.
+		/// </summary>
+		public static void HandleClientConnected(bool isHostLoopback)
+		{
+			using var _ = Profiler.Scope();
+
+			// A remote joining client must not leave the rest of the table running while it
+			// loads: pause the sim (broadcast to all peers) so the ready screen freezes the
+			// world. The host's own loopback connect must not pause the sim on host start.
+			if (!isHostLoopback)
+				Utils.PauseSimForReadyScreen();
+
+			// Host owns the roster/visibility: recompute and rebroadcast show/hide + text.
+			RefreshScreen();
+			RefreshReadyState();
+		}
+
 		public static void SendAllReadyPacket()
 		{
 			using var _ = Profiler.Scope();

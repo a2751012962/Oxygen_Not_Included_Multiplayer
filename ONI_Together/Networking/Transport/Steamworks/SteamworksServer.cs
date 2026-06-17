@@ -242,9 +242,9 @@ namespace ONI_Together.Networking.Transport.Steam
 
             DebugConsole.Log($"[GameServer] Connection to {clientId} fully established!");
 
-            // Host owns the roster/visibility: recompute and rebroadcast show/hide + text.
-            ReadyManager.RefreshScreen();
-            ReadyManager.RefreshReadyState();
+            // Steam P2P: the host is never added through this remote-connection path, so
+            // this is always a remote client — no host-loopback case to exclude.
+            ReadyManager.HandleClientConnected(isHostLoopback: false);
             //SaveFileRequestPacket.SendSaveFile(clientId); // Old method
             //GoogleDriveUtils.UploadAndSendToClient(clientId); // Upload to googledrive and send to the client
         }
