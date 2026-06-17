@@ -139,7 +139,11 @@ namespace ONI_Together.Networking
 			using var _ = Profiler.Scope();
 
 			int readyCount = GetReadyCount();
-			int maxPlayers = MultiplayerSession.ConnectedPlayers.Values.Count;
+			// A client mid load-reconnect is off the roster (Riptide) but still expected, so
+			// add it to the total — otherwise the overlay reads e.g. "2/2" while we are
+			// (correctly) still waiting on the loader.
+			int pendingLoads = NetworkConfig.TransportServer?.PendingLoadingClientCount ?? 0;
+			int maxPlayers = MultiplayerSession.ConnectedPlayers.Values.Count + pendingLoads;
 			string message = string.Format(STRINGS.UI.MP_OVERLAY.SYNC.WAITING_FOR_PLAYERS_SYNC, readyCount, maxPlayers);
 			foreach (MultiplayerPlayer player in MultiplayerSession.ConnectedPlayers.Values)
 			{

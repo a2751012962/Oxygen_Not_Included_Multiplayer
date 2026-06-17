@@ -300,8 +300,9 @@ namespace ONI_Together.Networking.Transport.Lan
         // A loading client disconnects (removed from ConnectedPlayers, see
         // ServerOnClientDisconnected) and later reconnects with a new Riptide id, so while
         // it loads it is invisible to IsEveryoneReady. Surface it here so ReadyManager can
-        // keep the host gated and the ready screen open through the load window.
-        public override bool HasPendingLoadingClients => _loadingClients.Count > 0;
+        // keep the host gated, the ready screen open, and the roster total honest through
+        // the load window.
+        public override int PendingLoadingClientCount => _loadingClients.Count;
 
         public bool ConsumeReconnectFromLoad(ulong id)
         {
