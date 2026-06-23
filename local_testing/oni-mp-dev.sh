@@ -68,8 +68,12 @@ ONI_APP="${_env_app:-${ONI_APP:-$DEFAULT_APP}}"
 ONI_APP_2="${_env_app2:-${ONI_APP_2:-}}"
 ONI_MODS_DIR="${_env_mods:-${ONI_MODS_DIR:-}}"
 
-# --- pretty output ----------------------------------------------------------
-c_blue=$'\033[34m'; c_green=$'\033[32m'; c_yellow=$'\033[33m'; c_red=$'\033[31m'; c_dim=$'\033[2m'; c_off=$'\033[0m'
+# --- pretty output (colors only when writing to a terminal) -----------------
+if [ -t 1 ]; then
+    c_blue=$'\033[34m'; c_green=$'\033[32m'; c_yellow=$'\033[33m'; c_red=$'\033[31m'; c_dim=$'\033[2m'; c_off=$'\033[0m'
+else
+    c_blue=''; c_green=''; c_yellow=''; c_red=''; c_dim=''; c_off=''
+fi
 info()  { printf '%s==>%s %s\n' "$c_blue"  "$c_off" "$*"; }
 ok()    { printf '%s ok %s %s\n' "$c_green" "$c_off" "$*"; }
 warn()  { printf '%swarn%s %s\n' "$c_yellow" "$c_off" "$*" >&2; }
@@ -88,7 +92,8 @@ app_binary() {
         echo "$app/Contents/MacOS/$exe"; return 0
     fi
     # fallback: first executable file in Contents/MacOS
-    /usr/bin/find "$app/Contents/MacOS" -maxdepth 1 -type f -perm +111 2>/dev/null | head -1
+    # (|| true guards against pipefail/SIGPIPE aborting the script under set -e)
+    /usr/bin/find "$app/Contents/MacOS" -maxdepth 1 -type f -perm +111 2>/dev/null | head -1 || true
 }
 
 # Best-effort detection of ONI's mods folder on macOS.
@@ -113,7 +118,7 @@ ONI_APP="$ONI_APP"
 ONI_APP_2="$ONI_APP_2"
 ONI_MODS_DIR="$(detect_mods_dir)"
 EOF
-    ok "cached paths -> ${CONFIG/#$HOME/~}"
+    ok "cached paths -> ${CONFIG/#$HOME/\~}"
 }
 
 # --- commands ---------------------------------------------------------------
@@ -123,27 +128,27 @@ cmd_paths() {
     app1_bin="$(app_binary "$ONI_APP")"
     mods="$(detect_mods_dir)"
 
-    info "Repo root         : ${REPO_ROOT/#$HOME/~}"
-    info "Mod package       : ${MOD_PACKAGE/#$HOME/~}"
+    info "Repo root         : ${REPO_ROOT/#$HOME/\~}"
+    info "Mod package       : ${MOD_PACKAGE/#$HOME/\~}"
     [ -f "$MOD_PACKAGE/mod.yaml" ] && ok "mod package looks valid (mod.yaml present)" \
         || warn "mod package mod.yaml not found — did you build the mod?"
 
     echo
-    info "Instance 1 (.app) : ${ONI_APP/#$HOME/~}"
-    if [ -n "$app1_bin" ]; then ok "binary: ${app1_bin/#$HOME/~}"
+    info "Instance 1 (.app) : ${ONI_APP/#$HOME/\~}"
+    if [ -n "$app1_bin" ]; then ok "binary: ${app1_bin/#$HOME/\~}"
     else err "OxygenNotIncluded.app not found — set ONI_APP (see: $0 config)"; fi
 
     if [ -n "$ONI_APP_2" ]; then
         app2_bin="$(app_binary "$ONI_APP_2")"
-        info "Instance 2 (.app) : ${ONI_APP_2/#$HOME/~}"
-        if [ -n "$app2_bin" ]; then ok "binary: ${app2_bin/#$HOME/~}"
+        info "Instance 2 (.app) : ${ONI_APP_2/#$HOME/\~}"
+        if [ -n "$app2_bin" ]; then ok "binary: ${app2_bin/#$HOME/\~}"
         else err "2nd .app not found at ONI_APP_2"; fi
     else
         info "Instance 2 (.app) : ${c_dim}(none set — launch2 will run the 1st app twice)${c_off}"
     fi
 
     echo
-    info "ONI mods folder   : ${mods/#$HOME/~}"
+    info "ONI mods folder   : ${mods/#$HOME/\~}"
     [ -d "$mods" ] && ok "exists" || warn "does not exist yet (install will create it)"
     local installed="$mods/local/$MOD_FOLDER_NAME"
     [ -d "$installed" ] && ok "mod installed at local/$MOD_FOLDER_NAME" \
@@ -159,7 +164,7 @@ cmd_install() {
     mkdir -p "$mods/local"
     rm -rf "$dest"
     cp -R "$MOD_PACKAGE" "$dest"
-    ok "installed -> ${dest/#$HOME/~}"
+    ok "installed -> ${dest/#$HOME/\~}"
     info "Enable it in-game under Mods, then restart ONI."
     info "Both instances share this folder, so one install covers both."
 }
@@ -170,10 +175,11 @@ _appid_for_app() {
     bin="$(app_binary "$app")"; [ -n "$bin" ] || { warn "skip (no binary): $app"; return 0; }
     macos="$(dirname "$bin")"
     if [ "$action" = remove ]; then
-        rm -f "$macos/steam_appid.txt" && ok "removed steam_appid.txt from ${macos/#$HOME/~}"
+        rm -f "$macos/steam_appid.txt" && ok "removed steam_appid.txt from ${macos/#$HOME/\~}"
     else
-        printf '%s' "$STEAM_APP_ID" > "$macos/steam_appid.txt"
-        ok "wrote steam_appid.txt ($STEAM_APP_ID) -> ${macos/#$HOME/~}"
+        printf '%s' "$STEAM_APP_ID" > "$macos/steam_appid.txt" \
+            || die "cannot write steam_appid.txt to ${macos/#$HOME/\~} (permission?)"
+        ok "wrote steam_appid.txt ($STEAM_APP_ID) -> ${macos/#$HOME/\~}"
     fi
 }
 
@@ -192,13 +198,16 @@ _launch_one() {
     macos="$(dirname "$bin")"
     log="$GEN_DIR/instance-$label.log"
     info "Launching instance $label"
-    printf '   app : %s\n' "${app/#$HOME/~}"
-    printf '   log : %s\n' "${log/#$HOME/~}"
+    printf '   app : %s\n' "${app/#$HOME/\~}"
+    printf '   log : %s\n' "${log/#$HOME/\~}"
     # cd into the binary dir so a steam_appid.txt there is picked up, and also
     # export SteamAppId so it works even without the file.
     if [ "$mode" = bg ]; then
-        ( cd "$macos" && SteamAppId="$STEAM_APP_ID" exec "$bin" ) >"$log" 2>&1 &
+        # nohup + disown so the instances keep running after this script (or a
+        # double-clicked .command window) exits — otherwise SIGHUP kills them.
+        ( cd "$macos" && SteamAppId="$STEAM_APP_ID" exec nohup "$bin" >"$log" 2>&1 ) &
         local pid=$!
+        disown 2>/dev/null || true
         echo "$pid" >> "$PIDS_FILE"
         ok "started (pid $pid)"
     else
@@ -223,7 +232,7 @@ cmd_launch2() {
     sleep 2
     _launch_one "2" "$app2" bg
     echo
-    ok "Two instances launching. Logs: ${GEN_DIR/#$HOME/~}/instance-*.log"
+    ok "Two instances launching. Logs: ${GEN_DIR/#$HOME/\~}/instance-*.log"
     info "Stop them with: $0 stop"
     info "To actually connect them, see 'Connecting the instances' in the README"
     info "(use the direct-IP / Riptide transport — Steam P2P shares one account)."
@@ -239,40 +248,50 @@ cmd_clone_instance() {
         *) dest="${dest%/}/OxygenNotIncluded.app" ;;
     esac
     info "Cloning install (this copies the whole game — may take a minute)"
-    printf '   from: %s\n' "${ONI_APP/#$HOME/~}"
-    printf '   to  : %s\n' "${dest/#$HOME/~}"
+    printf '   from: %s\n' "${ONI_APP/#$HOME/\~}"
+    printf '   to  : %s\n' "${dest/#$HOME/\~}"
     mkdir -p "$(dirname "$dest")"
     # ditto preserves the app bundle correctly on macOS.
     if command -v ditto >/dev/null 2>&1; then ditto "$ONI_APP" "$dest"; else cp -R "$ONI_APP" "$dest"; fi
     ONI_APP_2="$dest"
     save_config
-    ok "2nd instance set to ${dest/#$HOME/~}"
+    ok "2nd instance set to ${dest/#$HOME/\~}"
     info "Tip: point this copy at the 'public' branch and your main install at"
     info "'public_testing' (or vice-versa) to test across game branches."
 }
 
 cmd_stop() {
     [ -f "$PIDS_FILE" ] || { info "no tracked instances"; return 0; }
-    local pid stopped=0
+    local pid stopped=0 i
     while read -r pid; do
         [ -n "$pid" ] || continue
-        if kill "$pid" 2>/dev/null; then ok "stopped pid $pid"; stopped=1; fi
+        kill -0 "$pid" 2>/dev/null || continue        # already gone
+        kill "$pid" 2>/dev/null || true               # ask nicely (SIGTERM)
+        i=0
+        while kill -0 "$pid" 2>/dev/null && [ "$i" -lt 10 ]; do sleep 0.3; i=$((i + 1)); done
+        kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true  # force if still up
+        ok "stopped pid $pid"; stopped=1
     done < "$PIDS_FILE"
     : > "$PIDS_FILE"
     [ "$stopped" = 1 ] || info "nothing was running"
 }
 
 cmd_config() {
-    info "Cached config: ${CONFIG/#$HOME/~}"
+    info "Cached config: ${CONFIG/#$HOME/\~}"
     [ -f "$CONFIG" ] && cat "$CONFIG" || info "(none yet — run '$0 paths' or set ONI_APP/ONI_MODS_DIR)"
     echo
     info "Resolved now:"
-    printf '   ONI_APP      = %s\n' "${ONI_APP/#$HOME/~}"
+    local mods; mods="$(detect_mods_dir)"
+    printf '   ONI_APP      = %s\n' "${ONI_APP/#$HOME/\~}"
     printf '   ONI_APP_2    = %s\n' "${ONI_APP_2:-<none>}"
-    printf '   ONI_MODS_DIR = %s\n' "$(detect_mods_dir | sed "s#$HOME#~#")"
+    printf '   ONI_MODS_DIR = %s\n' "${mods/#$HOME/\~}"
 }
 
-cmd_help() { sed -n '2,46p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+cmd_help() {
+    # Print the leading comment block (between the shebang and the first
+    # non-comment line), stripping the leading "# ". Robust to edits above.
+    awk 'NR==1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' "${BASH_SOURCE[0]}"
+}
 
 # --- dispatch ---------------------------------------------------------------
 main() {

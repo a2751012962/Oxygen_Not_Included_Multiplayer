@@ -108,7 +108,10 @@ both windows as clients.
 
 - Per-instance output: `local_testing/.generated/instance-1.log`, `instance-2.log`
 - ONI's own player log (macOS): `~/Library/Logs/Klei/Oxygen Not Included/Player.log`
-- `.generated/` is git-ignored. `./oni-mp-dev.sh stop` ends what the script started.
+- Launched instances are detached (`nohup`), so they keep running after you close
+  the helper / double-clicked `.command` window — quit them in-game or with
+  `./oni-mp-dev.sh stop` (which escalates to a force-kill if an instance hangs).
+- `.generated/` is git-ignored.
 
 ## Other platforms
 
