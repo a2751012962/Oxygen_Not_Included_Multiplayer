@@ -22,10 +22,21 @@ second machine or a second Steam account window.
 ```bash
 cd local_testing
 chmod +x oni-mp-dev.sh *.command     # first time only
-
 ./oni-mp-dev.sh paths                # check it found your game + mods folder
+```
+
+**Test the prebuilt package** (the `mod/oni_mp` committed in this repo):
+
+```bash
 ./oni-mp-dev.sh install              # install the mod into mods/local
 ./oni-mp-dev.sh launch2              # boot two instances
+```
+
+**Or build from source** (needs the .NET 8 SDK + ONI installed):
+
+```bash
+./oni-mp-dev.sh setup                # one-time: scaffold Directory.Build.props.user
+./oni-mp-dev.sh dev                  # build (auto-deploys) + launch two instances
 ```
 
 Or, from Finder, double-click **`Check setup.command`**,
@@ -38,16 +49,21 @@ Or, from Finder, double-click **`Check setup.command`**,
 - Oxygen Not Included installed via Steam, and the **Steam client running and
   logged in** (the game still talks to Steam for its API; it just doesn't go
   through Steam's launcher).
-- A built mod package at `../mod/oni_mp/` (already committed in this repo). To
-  refresh it, rebuild `ONI_MP.dll` and drop it into `../mod/oni_mp/` — see the
-  main README's *Setup* section.
+- The mod itself, via **either** path:
+  - **Prebuilt:** the committed package at `../mod/oni_mp/` — just `install` it.
+  - **From source:** run `setup` then `build` (needs the **.NET 8 SDK** and ONI
+    installed so the build can reference the game's assemblies — see the main
+    README's *Setup* section for the full toolchain).
 
 ## Commands
 
 | Command | What it does |
 |---|---|
 | `./oni-mp-dev.sh paths` | Detect & print every path used; flags anything missing. Run this first. |
-| `./oni-mp-dev.sh install` | Copy `../mod/oni_mp` → `…/Klei/OxygenNotIncluded/mods/local/oni_mp`. |
+| `./oni-mp-dev.sh setup` | One-time: scaffold the git-ignored `Directory.Build.props.user` from detected paths and `dotnet tool restore`. `--force` overwrites an existing file. |
+| `./oni-mp-dev.sh build` | Compile the mod; the repo's MSBuild targets auto-deploy it to `…/mods/dev/ONI_Together_dev`. `--release` for a Release build. |
+| `./oni-mp-dev.sh dev` | `build` then `launch2` — the full from-source loop in one command. |
+| `./oni-mp-dev.sh install` | Copy the prebuilt `../mod/oni_mp` → `…/Klei/OxygenNotIncluded/mods/local/oni_mp`. |
 | `./oni-mp-dev.sh appid` | Write `steam_appid.txt` (`457140`) next to the game binary. (Optional — `launch` already sets the env var.) |
 | `./oni-mp-dev.sh appid --remove` | Remove those `steam_appid.txt` files. |
 | `./oni-mp-dev.sh launch` | Launch ONE instance in the foreground (add `--bg` to background it). |
@@ -69,6 +85,19 @@ ONI_MODS_DIR="$HOME/Library/Application Support/Klei/OxygenNotIncluded/mods" ./o
 Defaults it looks for:
 - Game: `~/Library/Application Support/Steam/steamapps/common/OxygenNotIncluded/OxygenNotIncluded.app`
 - Mods: `~/Library/Application Support/Klei/OxygenNotIncluded/mods`
+
+## Build from source vs. the prebuilt package
+
+These are two **separate** mods in two **different** folders — don't enable both:
+
+| | Folder it lands in | Mod name in-game |
+|---|---|---|
+| `build` / `dev` (from source) | `…/Klei/OxygenNotIncluded/mods/dev/ONI_Together_dev` | *Oxygen Not Included Together* |
+| `install` (prebuilt package) | `…/Klei/OxygenNotIncluded/mods/local/oni_mp` | *ItsLuke's Multiplayer Mod* |
+
+Pick one per testing session and enable only that one in the in-game Mods list;
+having both active loads the mod twice and will conflict. `build` is for
+iterating on the code; `install` is for quickly dropping in the committed build.
 
 ## One install or two?
 
