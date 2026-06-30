@@ -144,8 +144,17 @@ both windows as clients.
 
 ## Other platforms
 
-This folder targets macOS. The same trick works elsewhere:
-- **Windows:** a `.bat`/shortcut that sets `SteamAppId=457140` then runs
-  `OxygenNotIncluded.exe`, or a `steam_appid.txt` in the game folder.
-- **Linux/Proton:** export `SteamAppId=457140` before launching the binary, or
-  drop the `steam_appid.txt` file beside it.
+The full helper (`oni-mp-dev.sh`) targets macOS, but the core "launch two
+instances" trick is the same everywhere, and ready-made launchers are included:
+
+- **Windows:** `windows/launch-two-instances.bat` (double-click) or
+  `windows/launch-two-instances.ps1` (`-OniDir` parameter). Both set
+  `SteamAppId=457140` and start `OxygenNotIncluded.exe` twice. Override the
+  game folder with `set "ONI_DIR=D:\...\OxygenNotIncluded"` (`.bat`) or
+  `-OniDir` (`.ps1`).
+- **Linux/Proton:** `linux/launch-two-instances.sh` — auto-detects the usual
+  Steam locations; override with `ONI_DIR=/path/to/OxygenNotIncluded`.
+
+These only launch the two instances; installing/building the mod and the other
+conveniences are macOS-only for now. The same direct-IP (Riptide) note above
+applies when connecting the windows.

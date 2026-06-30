@@ -81,6 +81,20 @@ To get started with building the mod, follow these steps:
 
 ---
 
+## Local multiplayer testing (two instances on one machine)
+
+Steam won't launch the game twice, but the executable only needs its Steam
+**AppId (`457140`)** — set the `SteamAppId` environment variable (or drop a
+`steam_appid.txt` next to the binary) and a second instance comes up, which is
+enough to test host↔client locally. The [`local_testing/`](local_testing/)
+folder has ready-made launchers and a fuller macOS helper (`oni-mp-dev.sh`:
+`setup` / `build` / `install` / `launch2`); see
+[`local_testing/README.md`](local_testing/README.md). Two local clients share
+one Steam account, so use the direct-IP **Riptide** transport (`127.0.0.1:7777`)
+rather than Steam P2P.
+
+---
+
 ## Debugging the Game
 
 To attach a managed debugger (e.g. Visual Studio) directly to a running ONI instance:
